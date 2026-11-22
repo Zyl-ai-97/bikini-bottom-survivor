@@ -2,18 +2,13 @@
 
 海面上有一座椰树小岛，木桶和易拉罐随着风浪起伏。等海鸥带着蓝色木牌飞过，点一下木牌，看它落进海里。穿过气泡就到了水下 92 米的比奇堡。从珊瑚湾游进镇里，看看街上的居民和房子，再找回刚才掉下来的木牌。
 
-<table>
-  <tr>
-    <td width="50%" align="center" valign="top">
-      <a href="docs/images/surface.webp"><img src="docs/images/surface.webp" width="100%" alt="海鸥带着蓝色木牌飞过海面，椰岛倒映在波浪里"></a><br>
-      海面的第一幕。木桶从水下浮起，海鸥带着通往比奇堡的木牌飞进画面。
-    </td>
-    <td width="50%" align="center" valign="top">
-      <a href="docs/images/dawn-island.webp"><img src="docs/images/dawn-island.webp" width="56%" alt="清晨低角度的光照在椰岛上，映在近处的海面"></a><br>
-      晨光里的椰岛。低处的日光会在浪间拉长，水桶也随水面缓缓升降。
-    </td>
-  </tr>
-</table>
+![海鸥带着蓝色木牌飞过海面，椰岛倒映在波浪里](docs/images/surface.webp)
+
+海面的第一幕。木桶从水下浮起，海鸥带着通往比奇堡的木牌飞进画面。
+
+![清晨低角度的光照在椰岛上，映在近处的海面](docs/images/dawn-island.webp)
+
+晨光里的椰岛。低处的日光会在浪间拉长，水桶也随水面缓缓升降。
 
 **[下载完整项目](https://github.com/ababanabk022-debug/bikini-bottom-shawn/archive/refs/tags/v1.0.1.zip)** · **[下载三个独立项目](https://github.com/ababanabk022-debug/bikini-bottom-shawn/releases/tag/v1.0.1)**
 
