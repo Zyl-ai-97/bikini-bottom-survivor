@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#07334a">
+  <title>比奇堡 · 海面</title>
+  <link rel="icon" href="data:,">
+  <link rel="preload" as="image" href="./assets/studio-cast.webp" fetchpriority="high">
+  <link rel="preload" as="image" href="./assets/studio-blue-bubble-background.webp" fetchpriority="low">
+  <link rel="modulepreload" href="./app.js" fetchpriority="low">
+  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./studio-intro.css">
+  <style>#studio-intro:not([data-phase]) { position: fixed; inset: 0; z-index: 10; background-color: #a2d5f1; }</style>
+  <noscript><style>#studio-intro { display: none; }</style></noscript>
+</head>
+<body>
+  <div id="studio-intro" role="status" aria-label="Loading" lang="en">
+    <img id="studio-cast" src="./assets/studio-cast.webp" width="2400" height="690" alt="" aria-hidden="true" fetchpriority="high">
+    <p id="studio-loading" aria-hidden="true">Loading…</p>
+    <button id="studio-unlock" type="button" hidden>Enable sound</button>
+  </div>
+  <script src="./studio-audio.js" defer></script>
+  <script src="./studio-intro.js" defer></script>
+  <main class="seascape" aria-label="比奇堡上方的海面" inert>
+    <h1 class="visually-hidden" lang="en">Bikini Bottom</h1>
+    <canvas id="ocean" aria-label="比奇堡海面。点击飞过的木牌或按回车让它落水漂浮。木桶、罐子和漂浮的木牌可拖动或提起，松手会落水。轻触水面会激起涟漪。"></canvas>
+    <canvas id="flight-detail" aria-hidden="true" hidden></canvas>
+    <input id="time-of-day" type="range" min="0" max="1000" step="1" value="15" aria-label="昼夜时间">
+    <button id="sea-sound" type="button" aria-label="开场与海面声音" aria-pressed="true" hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 9h3.5L12 5.3v13.4L7.5 15H4z"/>
+        <path class="sound-muted" d="m16 9.7 4.6 4.6m0-4.6L16 14.3"/>
+        <path class="sound-waves" d="M15.4 8.6a5.2 5.2 0 0 1 0 6.8M18.3 5.9a9 9 0 0 1 0 12.2"/>
+      </svg>
+    </button>
+  </main>
+  <script type="module">
+    import { mountSurface } from './entry.js';
+
+    void mountSurface();
+  </script>
+</body>
+</html>

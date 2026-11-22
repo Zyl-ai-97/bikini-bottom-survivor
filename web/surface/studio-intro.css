@@ -1,0 +1,92 @@
+#studio-intro {
+  --studio-cast-ratio: 3.47826;
+  --studio-cast-width: min(83vw, calc(67vh * var(--studio-cast-ratio)));
+  --studio-paper-opacity: .62;
+  position: fixed;
+  z-index: 10;
+  inset: 0;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background-color: #0a90da;
+  background-image: linear-gradient(
+    rgb(255 255 255 / var(--studio-paper-opacity)),
+    rgb(255 255 255 / var(--studio-paper-opacity))
+  ), url('./assets/studio-blue-bubble-background.webp');
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  color-scheme: light;
+  touch-action: none;
+}
+
+#studio-cast, .studio-cast-pieces {
+  grid-area: 1 / 1;
+  width: var(--studio-cast-width);
+  pointer-events: none;
+}
+
+#studio-cast {
+  display: block;
+  height: auto;
+  opacity: 0;
+}
+
+#studio-intro[data-cast-ready] #studio-cast { opacity: 1; }
+#studio-intro[data-cast-pieces] #studio-cast { visibility: hidden; }
+
+.studio-cast-pieces {
+  position: relative;
+  aspect-ratio: var(--studio-cast-ratio) / 1;
+}
+
+.studio-cast-piece {
+  position: absolute;
+  inset-block: 0;
+  background-image: var(--studio-source);
+  background-repeat: no-repeat;
+  transform-origin: center 90%;
+}
+
+#studio-cast, .studio-cast-piece { filter: saturate(1.28); }
+
+#studio-loading, #studio-unlock {
+  position: absolute;
+  top: calc(50% + var(--studio-cast-width) / var(--studio-cast-ratio) * .42 + clamp(6px, 2vh, 18px));
+  left: 50%;
+  margin: 0;
+  transform: translateX(-50%);
+  color: #222;
+  font-family: system-ui, "Segoe UI", sans-serif;
+  font-size: clamp(11px, 1.35vw, 16px);
+  font-weight: 300;
+  letter-spacing: .04em;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+#studio-loading button {
+  color: inherit;
+  font: inherit;
+}
+
+#studio-loading button, #studio-unlock {
+  border: 0;
+  background: transparent;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+#studio-unlock {
+  top: calc(50% + var(--studio-cast-width) / var(--studio-cast-ratio) * .42 + clamp(6px, 2vh, 18px) + 1.9em);
+  font-size: clamp(11px, 1.35vw, 14px);
+  font-weight: 400;
+}
+
+@media (orientation: portrait) {
+  #studio-intro {
+    --studio-cast-width: min(98vw, calc(67vh * var(--studio-cast-ratio)));
+    background-position: 12% center;
+  }
+}

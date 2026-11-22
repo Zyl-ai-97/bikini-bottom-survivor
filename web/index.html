@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#07334a">
+  <meta name="description" content="从海面追随海鸥，穿过气泡，潜入可以自由漫游的比奇堡。">
+  <title>Bikini Bottom · 海面到浅海</title>
+  <link rel="icon" href="data:,">
+  <link rel="preload" as="image" href="./surface/assets/studio-cast.webp" fetchpriority="high">
+  <link rel="preload" as="image" href="./surface/assets/studio-blue-bubble-background.webp" fetchpriority="low">
+  <link rel="modulepreload" href="./surface/app.js" fetchpriority="low">
+  <link rel="stylesheet" href="./surface/style.css">
+  <link rel="stylesheet" href="./surface/studio-intro.css">
+  <style>#studio-intro:not([data-phase]) { position: fixed; inset: 0; z-index: 10; background-color: #a2d5f1; }</style>
+  <noscript><style>#studio-intro { display: none; }</style></noscript>
+</head>
+<body>
+  <div id="studio-intro" role="status" aria-label="Loading" lang="en">
+    <img id="studio-cast" src="./surface/assets/studio-cast.webp" width="2400" height="690" alt="" aria-hidden="true" fetchpriority="high">
+    <p id="studio-loading" aria-hidden="true">Loading…</p>
+    <button id="studio-unlock" type="button" hidden>Enable sound</button>
+  </div>
+  <script src="./surface/studio-audio.js" defer></script>
+  <script src="./surface/studio-intro.js" defer></script>
+  <main class="seascape" aria-label="比奇堡上方的海面" inert>
+    <h1 class="visually-hidden" lang="en">Bikini Bottom</h1>
+    <canvas id="ocean" aria-label="比奇堡海面。点一下飞过的木牌可潜入比奇堡，键盘也可按回车。木桶和罐子能左右拖动，向上拖可提起，松手可落水。轻触水面会激起涟漪。"></canvas>
+    <canvas id="flight-detail" aria-hidden="true" hidden></canvas>
+    <input id="time-of-day" type="range" min="0" max="1000" step="1" value="15" aria-label="昼夜时间">
+    <button id="sea-sound" type="button" aria-label="开场与海面声音" aria-pressed="true" hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 9h3.5L12 5.3v13.4L7.5 15H4z"/>
+        <path class="sound-muted" d="m16 9.7 4.6 4.6m0-4.6L16 14.3"/>
+        <path class="sound-waves" d="M15.4 8.6a5.2 5.2 0 0 1 0 6.8M18.3 5.9a9 9 0 0 1 0 12.2"/>
+      </svg>
+    </button>
+    <iframe id="dive-view" title="浅海漫游" tabindex="-1" aria-hidden="true" inert allowfullscreen></iframe>
+    <div id="dive-wash" aria-hidden="true"></div>
+    <video id="dive-bubbles" aria-hidden="true" muted playsinline preload="auto" disablepictureinpicture></video>
+    <p id="dive-status" role="status" hidden>浅海暂时无法打开，可以稍后再点木牌重试。</p>
+  </main>
+  <script type="module">
+    import { mountSurface } from './surface/entry.js';
+    import { bubbleSoundUrl, createDiveTransition } from './transition/dive-transition.js';
+    import { prefetchModels } from './underwater/models.js';
+
+    window.getShallowModelPayload = prefetchModels;
+    const shallowModels = prefetchModels().then(() => true, () => false);
+    void mountSurface({ bubbleSoundUrl, createDiveTransition, shallowModels });
+  </script>
+</body>
+</html>

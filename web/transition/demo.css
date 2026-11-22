@@ -1,0 +1,70 @@
+:root {
+  font-family: system-ui, sans-serif;
+  color: #f1fafa;
+  background: #07171f;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; }
+main { width: min(100% - 2rem, 62rem); margin: 0 auto; padding: clamp(2rem, 5vw, 4rem) 0; }
+header { display: flex; align-items: end; justify-content: space-between; flex-wrap: wrap; gap: 1rem 1.5rem; margin-bottom: 1.25rem; }
+h1 { margin: 0; font-size: clamp(2rem, 6vw, 3.5rem); font-weight: 730; letter-spacing: -.055em; }
+p { margin: .45rem 0 0; color: #b7cdd1; }
+
+.preview {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  width: 100%;
+  min-height: 12rem;
+  max-height: 66vh;
+  aspect-ratio: 16 / 9;
+  border: 1px solid #578d98;
+  border-radius: 1rem;
+  background:
+    radial-gradient(ellipse at 58% 27%, #f0dda1dc, transparent 19%),
+    radial-gradient(ellipse at 50% 61%, #70d7dd94, transparent 50%),
+    linear-gradient(176deg, #64a9ab 0%, #95c4b0 45%, #287991 52%, #103751 100%);
+}
+
+.preview-arrival, video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.preview-arrival {
+  opacity: 0;
+  transition: opacity .31s ease;
+  background:
+    radial-gradient(ellipse at 49% -15%, #b5f7e2aa, transparent 50%),
+    radial-gradient(ellipse at 9% 80%, #326d8e81, transparent 59%),
+    repeating-linear-gradient(117deg, #a5f9f51a 0%, transparent 3.3%, transparent 12%),
+    linear-gradient(170deg, #238c9a, #124e6e 59%, #091f42);
+}
+
+.arrived .preview-arrival { opacity: 1; }
+video { object-fit: cover; mix-blend-mode: screen; }
+.controls p { max-width: 14rem; }
+.controls p:empty { display: none; }
+
+button {
+  min-height: 2.8rem;
+  padding: .6rem 1.1rem;
+  border: 0;
+  border-radius: .5rem;
+  font: inherit;
+  font-weight: 650;
+  color: #08222a;
+  background: #9fe5e2;
+}
+
+button:enabled { cursor: pointer; }
+button:enabled:hover { background: #c2f7f0; }
+button:disabled { opacity: .7; }
+button:focus-visible { outline: 3px solid white; outline-offset: 4px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .preview-arrival { transition: none; }
+}

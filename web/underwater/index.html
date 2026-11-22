@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#123542">
+  <meta name="description" content="在有流动光纹、沙丘和珊瑚礁的海底自由潜游。">
+  <title>浅海漫游</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="ecology.js"></script>
+  <script defer src="lagoon-textures.js"></script>
+  <script defer src="vista.js"></script>
+  <script defer src="bay-town.js"></script>
+  <script defer src="public-landmarks.js"></script>
+  <script defer src="district-buildings.js"></script>
+  <script defer src="town-expansion.js"></script>
+  <script defer src="approach.js"></script>
+  <script defer src="road-surface.js"></script>
+  <script defer src="wildlife.js"></script>
+  <script defer src="collision.js"></script>
+  <script defer src="controls.js"></script>
+  <script defer src="assets/blender/surface-finish.js"></script>
+  <script defer src="doorstep-sand.js"></script>
+  <script defer src="imported-renderer.js"></script>
+  <script defer src="arrow-lights.js"></script>
+  <script defer src="return-plaque.js"></script>
+  <script defer src="assets/town-contact.js"></script>
+  <script defer src="recording-camera.js"></script>
+  <script type="module" src="boot.js"></script>
+</head>
+<body>
+  <svg class="symbols" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="icon-compass" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9"></circle>
+      <path d="m14.7 9.3-1.5 3.9-3.9 1.5 1.5-3.9 3.9-1.5Z"></path>
+    </symbol>
+    <symbol id="icon-help" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="8.5"></circle>
+      <path d="M9.5 9a2.7 2.7 0 0 1 5.2.8c0 1.8-2.7 2.1-2.7 3.6m0 2.8v.2"></path>
+    </symbol>
+    <symbol id="icon-view" viewBox="0 0 24 24">
+      <path d="M8 5H5v3m11-3h3v3M5 16v3h3m11-3v3h-3M8.5 12h7m-7 0 2-2m-2 2 2 2m5-2-2-2m2 2-2 2"></path>
+    </symbol>
+    <symbol id="icon-expand" viewBox="0 0 24 24">
+      <path d="M4.5 9V4.5H9m6 0h4.5V9m0 6v4.5H15m-6 0H4.5V15"></path>
+    </symbol>
+    <symbol id="icon-collapse" viewBox="0 0 24 24">
+      <path d="M9 4.5V9H4.5m15 0H15V4.5m0 15V15h4.5m-15 0H9v4.5"></path>
+    </symbol>
+    <symbol id="icon-current" viewBox="0 0 24 24">
+      <path d="M3 8h12.5a2.5 2.5 0 1 0-2.5-2.5M3 12h16a2 2 0 1 1-2 2m-14 2h8a2 2 0 1 1-2 2"></path>
+    </symbol>
+    <symbol id="icon-reset" viewBox="0 0 24 24">
+      <path d="M5.8 10A7 7 0 1 1 5.3 15M5.5 4.8v5.6h5.6"></path>
+    </symbol>
+    <symbol id="icon-shallows" viewBox="0 0 24 24">
+      <path d="M3 15c3.5 0 4.2-2.4 7-2.4s3.4 2.4 6.2 2.4c2 0 3.4-1 4.8-1.8M3 19c3.5 0 4.2-2.4 7-2.4s3.4 2.4 6.2 2.4c2 0 3.4-1 4.8-1.8M10.5 4.5v4m-5.4-2 2.3 2.3m8.5-2.3-2.3 2.3"></path>
+    </symbol>
+    <symbol id="icon-reef" viewBox="0 0 24 24">
+      <path d="M4 20h16m-8 0V9m0 6C8 15 6 12 6 8m6 5c4 0 6-3 6-6M9 8 6 11 4 9m10-3-2 3-2-4m8 5 2-2"></path>
+    </symbol>
+    <symbol id="icon-trench" viewBox="0 0 24 24">
+      <path d="M3 7h4l5 11 5-11h4M8.6 7h6.8M10.5 11h3"></path>
+    </symbol>
+    <symbol id="icon-arrow" viewBox="0 0 24 24">
+      <path d="M12 19V5m-5 5 5-5 5 5"></path>
+    </symbol>
+  </svg>
+
+  <main class="ocean" aria-label="浅海漫游">
+    <canvas id="world" tabindex="0" aria-label="可拖动视角的三维海底场景" aria-describedby="controls-description"></canvas>
+    <p class="sr-only" id="controls-description">拖动鼠标或滑动场景可以转动视角。方向键或 W、A、S、D 游动，空格上浮，C 下潜。右上角的视野菜单可以调整上下和左右的可见范围。</p>
+
+    <div class="hud">
+      <header class="mast">
+        <div class="identity">
+          <div class="identity-mark" aria-hidden="true">
+            <svg width="25" height="25" viewBox="0 0 28 28" fill="none">
+              <path d="M14 2.7 25.3 14 14 25.3 2.7 14 14 2.7Z" stroke="currentColor" stroke-width="1.1"/>
+              <path d="M7 14.1c3.2 0 3.8-2.5 7-2.5s3.8 2.5 7 2.5M9.6 17.4c2.2-1.9 6.6-1.9 8.8 0" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h1>浅海漫游</h1>
+        </div>
+
+        <div class="heading" role="group" aria-label="当前航向">
+          <svg class="icon" aria-hidden="true"><use href="#icon-compass"></use></svg>
+          <span id="heading">N · 000°</span>
+        </div>
+
+        <div class="top-actions">
+          <details id="view-settings" class="view-settings">
+            <summary class="action-button view-button" title="调整视野">
+              <svg class="icon" aria-hidden="true"><use href="#icon-view"></use></svg><span>视野</span>
+            </summary>
+            <section class="view-panel" aria-labelledby="view-title">
+              <h2 id="view-title">镜头视野</h2>
+              <div class="view-angle">
+                <label for="view-vertical">上下视野</label>
+                <output id="view-vertical-value" for="view-vertical" aria-hidden="true">80°</output>
+                <input id="view-vertical" type="range" min="45" max="100" value="80">
+              </div>
+              <div class="view-angle">
+                <label for="view-horizontal">左右视野</label>
+                <output id="view-horizontal-value" for="view-horizontal" aria-hidden="true">98°</output>
+                <input id="view-horizontal" type="range" min="25" max="140" value="98">
+              </div>
+              <button id="view-reset" class="action-button" type="button">恢复默认视野</button>
+              <fieldset class="view-options">
+                <legend>画质</legend>
+                <label><input type="radio" name="quality" value="auto" checked>自动</label>
+                <label><input type="radio" name="quality" value="detail">清晰优先</label>
+              </fieldset>
+              <fieldset class="view-options">
+                <legend>路面比较</legend>
+                <label><input type="radio" name="road" value="flat">A · 齐沙路</label>
+                <label><input type="radio" name="road" value="raised" checked>B · 微抬路</label>
+              </fieldset>
+            </section>
+          </details>
+          <details class="help">
+            <summary class="icon-button" aria-label="操作指南" title="操作指南">
+              <svg class="icon" aria-hidden="true"><use href="#icon-help"></use></svg>
+            </summary>
+            <div class="help-panel">
+              <h2>操作指南</h2>
+              <dl class="keyboard-guide">
+                <div><dt>环顾</dt><dd>拖动鼠标</dd></div>
+                <div><dt>游动</dt><dd><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd></dd></div>
+                <div><dt>上浮</dt><dd><kbd>Space</kbd></dd></div>
+                <div><dt>下潜</dt><dd><kbd>C</kbd></dd></div>
+                <div><dt>加速</dt><dd><kbd>Shift</kbd></dd></div>
+              </dl>
+              <dl class="touch-guide">
+                <div><dt>环顾</dt><dd>在水中滑动</dd></div>
+                <div><dt>游动</dt><dd>长按左侧方向键</dd></div>
+                <div><dt>升降</dt><dd>长按右侧箭头</dd></div>
+              </dl>
+            </div>
+          </details>
+          <button class="icon-button" type="button" id="fullscreen" aria-label="全屏" aria-pressed="false" title="全屏">
+            <svg class="icon enter-fullscreen" aria-hidden="true"><use href="#icon-expand"></use></svg>
+            <svg class="icon leave-fullscreen" aria-hidden="true"><use href="#icon-collapse"></use></svg>
+          </button>
+        </div>
+      </header>
+
+      <aside class="depth-meter" aria-label="水下深度">
+        <div class="depth-reading">
+          <span class="instrument-label">水下深度</span>
+          <span id="depth">92.0 m</span>
+        </div>
+        <div class="depth-scale" aria-hidden="true">
+          <div class="depth-ticks"></div>
+          <div class="depth-track"><span id="depth-fill" style="height: 85.2%"></span></div>
+        </div>
+      </aside>
+
+      <details class="district-menu">
+        <summary class="action-button">
+          <span>街区导览</span>
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+        </summary>
+        <nav aria-label="街区导览">
+          <button type="button" data-view="conch" aria-pressed="false">海螺街三邻居</button>
+          <button type="button" data-view="neighbors" aria-pressed="false">菠萝屋门前</button>
+          <button type="button" data-view="diner" aria-pressed="false">蟹堡王</button>
+          <button type="button" data-view="chum" aria-pressed="false">海之霸</button>
+          <button type="button" data-view="cove" aria-pressed="false">海湾住宅区</button>
+          <button type="button" data-view="horn" aria-pressed="false">号角屋与锚屋</button>
+        </nav>
+      </details>
+      <div class="touch-controls" aria-label="触控方向键">
+        <div class="swim-pad" role="group" aria-label="水平游动">
+          <button class="pad-button pad-up" type="button" data-input="forward" aria-label="向前">
+            <svg class="icon" aria-hidden="true"><use href="#icon-arrow"></use></svg>
+          </button>
+          <button class="pad-button pad-left" type="button" data-input="left" aria-label="向左">
+            <svg class="icon" aria-hidden="true"><use href="#icon-arrow"></use></svg>
+          </button>
+          <button class="pad-button pad-right" type="button" data-input="right" aria-label="向右">
+            <svg class="icon" aria-hidden="true"><use href="#icon-arrow"></use></svg>
+          </button>
+          <button class="pad-button pad-down" type="button" data-input="back" aria-label="向后">
+            <svg class="icon" aria-hidden="true"><use href="#icon-arrow"></use></svg>
+          </button>
+        </div>
+        <div class="rise-pad" role="group" aria-label="垂直游动">
+          <button class="pad-button" type="button" data-input="up" aria-label="上浮">
+            <svg class="icon" aria-hidden="true"><use href="#icon-arrow"></use></svg><span>上浮</span>
+          </button>
+          <button class="pad-button pad-down" type="button" data-input="down" aria-label="下潜">
+            <svg class="icon" aria-hidden="true"><use href="#icon-arrow"></use></svg><span>下潜</span>
+          </button>
+        </div>
+      </div>
+
+      <footer class="dock">
+        <div class="quick-guide">
+          <span><kbd>W A S D</kbd> 游动</span>
+          <span>拖动环顾</span>
+        </div>
+
+        <nav class="waypoints" aria-label="海底航点">
+          <button class="waypoint" type="button" data-view="shallows" aria-pressed="true">
+            <svg class="icon" aria-hidden="true"><use href="#icon-shallows"></use></svg><span>海湾全景</span>
+          </button>
+          <button class="waypoint" type="button" data-view="town" aria-pressed="false"><span>远眺小镇</span></button>
+          <button class="waypoint" type="button" data-view="street" aria-pressed="false"><span>镇内街口</span></button>
+          <button class="waypoint" type="button" data-view="ridge" aria-pressed="false"><span>后坡街区</span></button>
+          <button class="waypoint" type="button" data-view="reef" aria-pressed="false">
+            <svg class="icon" aria-hidden="true"><use href="#icon-reef"></use></svg><span>珊瑚礁</span>
+          </button>
+          <button class="waypoint" type="button" data-view="trench" aria-pressed="false">
+            <svg class="icon" aria-hidden="true"><use href="#icon-trench"></use></svg><span>深水边缘</span>
+          </button>
+        </nav>
+
+        <div class="bottom-actions">
+          <button class="action-button" type="button" id="cruise" aria-pressed="false">
+            <svg class="icon" aria-hidden="true"><use href="#icon-current"></use></svg><span>海湾巡游</span>
+          </button>
+          <button class="action-button" type="button" id="reset">
+            <svg class="icon" aria-hidden="true"><use href="#icon-reset"></use></svg><span>回到起点</span>
+          </button>
+        </div>
+      </footer>
+    </div>
+
+    <div id="status" class="status" role="status">正在潜入浅海…</div>
+    <noscript>
+      <style>#status, .hud { display: none; }</style>
+      <p class="status">请启用 JavaScript 以进入海底。</p>
+    </noscript>
+  </main>
+</body>
+</html>

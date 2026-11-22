@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="./demo.css">
+  <title>Bubble transition</title>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Bubble transition</h1>
+        <p>Preview the transparent video with its original soundtrack.</p>
+      </div>
+      <div class="controls">
+        <button id="play" type="button" disabled>Play transition</button>
+        <p id="status" role="status"></p>
+      </div>
+    </header>
+    <div class="preview" id="preview" aria-hidden="true">
+      <div class="preview-arrival"></div>
+      <video id="bubbles" muted playsinline preload="auto" disablepictureinpicture hidden></video>
+    </div>
+    <noscript><p>Enable JavaScript to play the preview.</p></noscript>
+  </main>
+  <script type="module" src="./demo.js"></script>
+</body>
+</html>

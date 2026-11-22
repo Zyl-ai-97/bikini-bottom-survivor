@@ -1,0 +1,218 @@
+:root {
+  color-scheme: dark;
+  background-color: #06364b;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.seascape {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(#195a9b 0%, #91cde8 59%, #145a79 59.2%, #06364b 100%);
+}
+
+.seascape[data-renderer="unavailable"] {
+  background: #07334a url('./assets/fallback.webp') 62% center / cover no-repeat;
+}
+
+.seascape[data-renderer="unavailable"] #ocean {
+  visibility: hidden;
+}
+
+#ocean {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+#flight-detail {
+  position: absolute;
+  inset: 0 auto auto 0;
+  pointer-events: none;
+}
+
+.seascape:is([data-renderer="unavailable"], [data-scene="shallow"]) #flight-detail {
+  visibility: hidden;
+}
+
+#time-of-day {
+  display: none;
+  position: absolute;
+  left: 50%;
+  bottom: max(4px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  width: clamp(132px, 16vw, 208px);
+  height: 44px;
+  margin: 0;
+  padding: 0;
+  appearance: none;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  opacity: 0;
+  pointer-events: none;
+  cursor: ew-resize;
+  touch-action: none;
+  transition: opacity 320ms ease-out;
+  --rail: linear-gradient(to right, #f2faf8 var(--played, 1.5%), #b3c5c8 var(--played, 1.5%));
+}
+
+.seascape[data-renderer="webgl"] #time-of-day {
+  display: block;
+}
+
+.seascape.show-timeline #time-of-day,
+.seascape.scrubbing #time-of-day,
+#time-of-day:focus-visible {
+  opacity: 0.92;
+  pointer-events: auto;
+  transition-duration: 160ms;
+}
+
+#time-of-day:focus-visible {
+  outline: 1px solid #dfefee;
+  outline-offset: -6px;
+}
+
+#time-of-day::-webkit-slider-runnable-track {
+  height: 2px;
+  border-radius: 2px;
+  background: var(--rail);
+  box-shadow: 0 1px 3px #062731ab;
+}
+
+#time-of-day::-moz-range-track {
+  height: 2px;
+  border-radius: 2px;
+  background: var(--rail);
+  box-shadow: 0 1px 3px #062731ab;
+}
+
+#time-of-day::-webkit-slider-thumb {
+  appearance: none;
+  width: 9px;
+  height: 9px;
+  margin-top: -3.5px;
+  border: 0;
+  border-radius: 50%;
+  background: #eff8f6;
+  box-shadow: 0 1px 3px #062731b3;
+}
+
+#time-of-day::-moz-range-thumb {
+  width: 9px;
+  height: 9px;
+  border: 0;
+  border-radius: 50%;
+  background: #eff8f6;
+  box-shadow: 0 1px 3px #062731b3;
+}
+
+/* A finger can start a scrub directly on the invisible rail. The rest of
+   the bottom edge stays part of the interactive sea. */
+@media (any-pointer: coarse) {
+  .seascape[data-renderer="webgl"] #time-of-day { pointer-events: auto; }
+}
+
+#sea-sound {
+  position: absolute;
+  top: max(10px, env(safe-area-inset-top));
+  right: max(12px, env(safe-area-inset-right));
+  width: 44px;
+  height: 44px;
+  padding: 6px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #edf5f5;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+#sea-sound svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 6px;
+  border-radius: 50%;
+  background: rgb(12 39 54 / 26%);
+  transition: background 150ms ease;
+}
+
+#sea-sound:is(:hover, :focus-visible) svg { background: rgb(12 39 54 / 56%); }
+#sea-sound:focus-visible { outline: 1px solid #dfefee; }
+#sea-sound[aria-pressed="false"] .sound-waves,
+#sea-sound[aria-pressed="true"] .sound-muted { display: none; }
+
+#dive-view, #dive-wash, #dive-bubbles {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+#dive-view {
+  z-index: 1;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+#dive-wash {
+  display: none;
+  z-index: 2;
+  opacity: 0;
+  background: radial-gradient(ellipse at 50% 12%, #168ba5 0%, #106281 47%, #0b415f 100%);
+}
+
+#dive-bubbles {
+  display: none;
+  z-index: 3;
+  object-fit: cover;
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+.seascape[data-crossing] :is(#dive-wash, #dive-bubbles:not([hidden])) {
+  display: block;
+}
+
+.seascape[data-scene="shallow"] #dive-view { opacity: 1; }
+.seascape[data-scene="shallow"]:not([data-crossing]) #dive-view { pointer-events: auto; }
+.seascape:is([data-crossing], [data-scene="shallow"]) :is(#time-of-day, #sea-sound) { visibility: hidden; }
+
+#dive-status {
+  position: absolute;
+  z-index: 4;
+  inset: auto 16px max(65px, env(safe-area-inset-bottom)) auto;
+  margin: 0;
+  padding: 9px 13px;
+  border-radius: 9px;
+  background: #092e43df;
+  color: #edf5f5;
+  font: 14px system-ui, sans-serif;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #time-of-day, #sea-sound svg { transition: none; }
+}
