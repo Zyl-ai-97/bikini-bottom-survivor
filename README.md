@@ -1,43 +1,119 @@
 # Bikini Bottom · 海面到浅海
 
-**by [MR.Shawn](https://github.com/ababanabk022-debug)**
+海面上有一座椰树小岛，木桶和易拉罐随着风浪起伏。等海鸥带着蓝色木牌飞过，点一下木牌，看它落进海里。穿过气泡就到了水下 92 米的比奇堡。从珊瑚湾游进镇里，看看街上的居民和房子，再找回刚才掉下来的木牌。
 
-等海鸥叼着蓝色木牌飞过。点下木牌，看它落入海里，再穿过一屏气泡，来到水下 92 米的比奇堡。沿珊瑚、街道和灯塔自由游览，最后带着同一块木牌回到海面。
+![海鸥带着蓝色木牌飞过海面，椰岛倒映在波浪里](docs/images/surface.webp)
 
-![海鸥叼着写有 Bikini Bottom 的木牌飞过海面，近处木桶随风浪起伏](docs/images/surface.webp)
+海面的第一幕。木桶从水下浮起，海鸥带着通往比奇堡的木牌飞进画面。
 
-**[下载完整项目](https://github.com/ababanabk022-debug/bikini-bottom-shawn/archive/refs/tags/v1.0.0.zip)** · **[独立项目下载](https://github.com/ababanabk022-debug/bikini-bottom-shawn/releases/tag/v1.0.0)**
+**[下载完整项目](https://github.com/ababanabk022-debug/bikini-bottom-shawn/archive/refs/tags/v1.0.1.zip)** · **[下载三个独立项目](https://github.com/ababanabk022-debug/bikini-bottom-shawn/releases/tag/v1.0.1)**
 
-## 运行
+## 海面
 
-使用 Node.js 20 或更高版本。解压完整项目，在项目目录运行即可。浏览器需要支持 WebGL 2。
+### 拎起一只木桶
+
+按住水上的桶往上拖，可以把它提离水面。松手后桶会砸回水里，溅起水花，再随着浪浮起。往侧面拖能推动或带转木桶和易拉罐，点水也能荡开一圈涟漪，带动近处的浮物。
+
+![木桶被拎出水面，其他浮物仍在海浪上起伏](docs/images/barrel-lift.webp)
+
+拎起木桶时，可以看清原本浸在水里的桶身和铁箍。
+
+![实录动图展示提起木桶、松手落水以及浮回水面](docs/images/barrel-play.gif)
+
+提起、松手、落水。一轮操作只要几秒。
+
+### 看一会儿风浪
+
+近处的短浪叠在缓慢起伏的涌浪上，椰树、天空和日光的倒影也会随水面变形。浪抬起时，能看到浮物浸在水中的一截。把鼠标移到画面下边缘，或在触屏上点一下底边，可以打开昼夜控制，在晨光、白昼、黄昏和夜色之间切换。环境声可从右上角开关。
+
+![清晨低角度的光照在椰岛上，映在近处的海面](docs/images/dawn-island.webp)
+
+晨光里的椰岛。低处的日光会在浪间拉长，水桶也随水面缓缓升降。
+
+## 气泡过场
+
+点击海鸥带着的木牌，木牌落水，视线下沉。气泡盖住视野时，海面切到浅海的开场视角。气泡声使用素材自带的独立音轨，往返时都走同一段过场。
+
+![实录动图展示点下海鸥木牌、气泡盖过画面并进入比奇堡](docs/images/bubble-dive.gif)
+
+从海鸥飞过到水下见到小镇。这段动图做了轻微加速。
+
+![比奇堡橙色救生圈、珊瑚和成片光柱出现在浅海开场](docs/images/coral-bay.webp)
+
+从约 92 米深的位置望向城镇。入口一带有欢迎救生圈、紫色贝壳、珊瑚和落到沙地的光纹。
+
+## 浅海漫游
+
+### 顺着路进镇
+
+拖动画面环顾，用 `WASD` 或方向键游动，`空格` 上浮，`C` 下潜，`Shift` 加速。触屏也可以用画面内的方向控制。右侧深度条可以帮你判断当前高度。合并版里，其他控件在闲置一会儿后会收起，将指针移到屏幕边缘或触碰边缘就能再叫出来。
+
+![实录动图展示从礁石外沿游到比奇堡的街道](docs/images/free-swim.gif)
+
+从礁石之间游进镇。途中可以转向、浮高、沉下来，按自己的路线看街景。
+
+![从比奇堡镇内街口往上看，房屋和光柱聚在视野里](docs/images/town-street.webp)
+
+镇内街口。贴近路面游时，可以仰看房屋和穿过水层的光柱。
+
+### 去几处熟悉的地方
+
+沿海螺街找菠萝屋、石像屋和邻居的住处，再继续往蟹堡王、海之霸和湾区住宅游。往外看还有灯塔、锚屋、珊瑚礁和海沟。建筑、角色和珊瑚之间都有可以游进去看的空间。靠近街上，有些角色会走动、转身或挥手。
+
+![海绵宝宝站在橙色菠萝屋前](docs/images/pineapple-house.webp)
+
+菠萝屋门前。游近一些，可以看到屋门、窗框和站在屋前的海绵宝宝。
+
+![章鱼哥和石像造型的高房子](docs/images/moai-house.webp)
+
+石像屋从巷口就能认出来。可以绕到侧面，再从路面抬头看它的轮廓。
+
+![比奇堡角色在小镇广场碰面](docs/images/town-cast.webp)
+
+小镇广场。顺路停一会儿，可以观察居民的姿势和动作。
+
+![蟹堡王的船形屋顶和沿街门面](docs/images/krusty-krab.webp)
+
+蟹堡王街景。沿街游过去时，可以慢慢看到门面、招牌和周围更大的建筑。
+
+![从比奇堡上方俯看道路、成片建筑和珊瑚礁](docs/images/town-aerial.webp)
+
+上浮做一次高处远眺，能看清城镇、绕行道路和外围礁石的关系。
+
+打开场景菜单可以直接去指定街区，或者选择「海湾巡游」，让镜头带你绕湾区走一圈。想自己找路线时，随时可以回到自由漫游。
+
+### 回到海面
+
+落水的木牌会进入同一个小镇，从贝壳附近落到镇前的沙地。游到它旁边点一下，就能穿过气泡回海面。想从水里直接上来，也可以一路往上游，到水下 50 米时会触发返程。
+
+![海鸥的蓝色木牌落在比奇堡镇前的海底沙地](docs/images/return-sign.webp)
+
+镇前沙地上的木牌，往返两段体验的入口。
+
+## 启动与下载
+
+需要 Node.js 20 或更高版本，以及支持 WebGL 2 的浏览器。解压完整项目后，在项目目录启动本地服务器。
 
 ```sh
 npm start
 ```
 
-打开 [合并版](http://127.0.0.1:8846/)。木桶和易拉罐可以拖动，海面底边可调昼夜，右上角可控制环境声。
+在浏览器打开 [合并版](http://127.0.0.1:8846/)，也可以直接打开任一独立入口。
 
-在浅海拖动屏幕环顾。用 `WASD` 或方向键游动，空格上浮，`C` 下潜，`Shift` 加速。游近落入镇前的木牌并点击，或上浮到水下 50 米，即可返回海面。
+| 独立项目 | 可以体验的内容 | 入口 | 独立下载 |
+| --- | --- | --- | --- |
+| 海面 | 风浪、昼夜、拖拽浮物与携牌飞行的海鸥 | [本地海面](http://127.0.0.1:8846/surface/) · [目录](web/surface/) | [surface.zip](https://github.com/ababanabk022-debug/bikini-bottom-shawn/releases/download/v1.0.1/surface.zip) |
+| 气泡过场 | 带透明通道的气泡 WebM、轻量版本与独立音轨 | [本地过场](http://127.0.0.1:8846/transition/) · [目录](web/transition/) | [transition.zip](https://github.com/ababanabk022-debug/bikini-bottom-shawn/releases/download/v1.0.1/transition.zip) |
+| 浅海 | 自由游动、街区跳转、海湾巡游，以及建筑与角色模型 | [本地浅海](http://127.0.0.1:8846/underwater/) · [目录](web/underwater/) | [underwater.zip](https://github.com/ababanabk022-debug/bikini-bottom-shawn/releases/download/v1.0.1/underwater.zip) |
 
-## 三个独立项目
+三个独立 ZIP 都带运行说明，各自解压后可用静态服务器单独打开。
 
-| 项目 | 内容 | 单独下载 |
-| --- | --- | --- |
-| [海面](web/surface/) | 实时风浪、倒影、可拖动浮物和携牌飞行的海鸥 | [surface.zip](https://github.com/ababanabk022-debug/bikini-bottom-shawn/releases/download/v1.0.0/surface.zip) |
-| [气泡过场](web/transition/) | 带透明通道的 WebM、低负载版本和独立的原声 AAC 音轨 | [transition.zip](https://github.com/ababanabk022-debug/bikini-bottom-shawn/releases/download/v1.0.0/transition.zip) |
-| [浅海](web/underwater/) | 可漫游的小镇、珊瑚和光柱，附 8 栋建筑与 19 个角色模型 | [underwater.zip](https://github.com/ababanabk022-debug/bikini-bottom-shawn/releases/download/v1.0.0/underwater.zip) |
+### 代码怎么组织
 
-运行完整项目后也可直接打开 [海面](http://127.0.0.1:8846/surface/)、[过场](http://127.0.0.1:8846/transition/) 或 [浅海](http://127.0.0.1:8846/underwater/)。单独下载的 ZIP 各自带有运行说明。
+合并版共用三个目录里的代码和资源，由 `web/index.html` 调度场景。海面用仓库自带的 Three.js 绘制波浪和倒影，浅海使用 WebGL 2。浅海的 8 个建筑模型和 19 个角色模型装在压缩资源包里，所以文件列表里看不到每个模型单独占一个文件。合并版在后台准备资源，切到海底后会暂停海面的绘制。 [合并入口](web/index.html)
 
-## 一次下潜
+## 许可
 
-![四幅实拍展示了点击海面木牌、气泡遮屏、进入浅海以及返回月夜海面的顺序](docs/images/crossing.webp)
-
-合并入口共用三个模块中的代码与素材。气泡遮住画面后才切换场景，海底打开时海面暂停绘制。首次下载较慢时可以先进海面，浅海模型继续在后台下载。
-
-![从海底开场位置俯瞰小镇、珊瑚和海面折射形成的光柱](docs/images/underwater.webp)
-
-## 素材与署名
-
-这是《海绵宝宝》主题的同人项目。角色、场景和媒体素材沿用各自的权利归属。仓库包含供浏览器直接使用的模型、贴图、动画和声音。Three.js 的许可随库附带。 [Three.js 许可](web/surface/vendor/LICENSE)
+- **项目原创代码**采用 GPL-3.0-only。可以使用、修改和商用。向他人分发受该许可覆盖的修改版时，需要沿用 GPLv3，并按许可提供对应源码。 [GPLv3 全文](LICENSE)
+- **项目有权授权的原创模型、贴图、文档和其他独立素材**采用 CC BY-NC-SA 4.0。可以非商用地使用和改作，分享改作时沿用同一许可，署名写项目名和来源链接。 [素材授权范围](ASSET-LICENSE.md)
+- 这是《海绵宝宝》主题的同人项目。人物、品牌标识和第三方动画、声音等各自适用原有权利。随海面项目附带的 Three.js 继续适用其 MIT 许可。 [Three.js 许可](web/surface/vendor/LICENSE)
