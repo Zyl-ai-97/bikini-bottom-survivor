@@ -47,6 +47,39 @@
   const quests = () => {
     try { return window.parent && window.parent.BudgetQuests; } catch { return undefined; }
   };
+  function postToParent(data) {
+    try { window.parent.postMessage(data, location.origin); } catch { /* 忽略 */ }
+  }
+
+  // —— NPC 与路人（DESIGN-v4 第 5、6 项）：只负责触发，交互在父页 social 模块 ——
+  const NPC_BY_LOC = { diner: 'krabs', school: 'puff', cove: 'sandy', chum: 'plankton' };
+  const NEIGHBOR_NPCS = ['patrick', 'squidward', 'spongebob'];
+  let neighborCycle = 0;
+  function npcAt(ids) {
+    for (const id of ids) if (NPC_BY_LOC[id]) return NPC_BY_LOC[id];
+    if (ids.includes('neighbors')) {
+      const q = quests();
+      try {
+        const active = q && q.getSide().find(s => s.status === 'active' && NEIGHBOR_NPCS.includes(
+          { 'patrick-icecream': 'patrick', 'squidward-reed': 'squidward', 'spongebob-jelly': 'spongebob' }[s.id]));
+        if (active) return { 'patrick-icecream': 'patrick', 'squidward-reed': 'squidward', 'spongebob-jelly': 'spongebob' }[active.id];
+      } catch { /* 忽略 */ }
+      neighborCycle = (neighborCycle + 1) % NEIGHBOR_NPCS.length;
+      return NEIGHBOR_NPCS[neighborCycle];
+    }
+    return null;
+  }
+  let lastPasserbyAt = 0;
+  function maybePasserby() {
+    if (currentAnchor < 0) return;
+    const ids = ANCHORS[currentAnchor].ids;
+    if (!ids.includes('street') && !ids.includes('conch') && !ids.includes('neighbors')) return;
+    const now = Date.now();
+    if (now - lastPasserbyAt < 120000) return;
+    if (Math.random() > 0.02) return;
+    lastPasserbyAt = now;
+    postToParent({ type: 'bikini-passerby' });
+  }
 
   // —— 任务罗盘（DESIGN-v4 第 1 项）：指向当前任务下一步地点 ——
   const LOC_NAMES = {
@@ -205,8 +238,12 @@
           } catch { /* 未接取相关任务时逻辑层会自行忽略 */ }
         }
         snapshotSides();
+        postToParent({ type: 'bikini-place', loc: ANCHORS[nearest].ids[0] });
+        const npc = npcAt(ANCHORS[nearest].ids);
+        if (npc) postToParent({ type: 'bikini-npc-near', npc });
       }
     }
+    maybePasserby();
     if (currentAnchor >= 0) {
       for (const id of ANCHORS[currentAnchor].ids) {
         if (!STAY_IDS.includes(id)) continue;
