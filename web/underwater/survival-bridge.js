@@ -48,6 +48,64 @@
     try { return window.parent && window.parent.BudgetQuests; } catch { return undefined; }
   };
 
+  // —— 任务罗盘（DESIGN-v4 第 1 项）：指向当前任务下一步地点 ——
+  const LOC_NAMES = {
+    diner: '蟹堡王', chum: '海之霸', neighbors: '邻居区', school: '航船学校',
+    market: '贝壳超市', jellyfield: '水母田', cove: '海湾', ridge: '山脊',
+    horn: '号角礁', street: '海螺街', conch: '海螺街',
+  };
+  const MAIN_LOC = { '食堂餐饮': 'diner', '超市日用': 'market', '学习打印': 'school', '娱乐社交': 'chum' };
+  const compass = document.createElement('div');
+  compass.id = 'survival-compass';
+  compass.hidden = true;
+  compass.style.cssText = 'position:fixed;top:56px;left:50%;transform:translateX(-50%);'
+    + 'background:rgba(10,35,45,.78);color:#e8f4f8;border-radius:999px;padding:5px 14px;'
+    + 'font:600 13px/1.5 system-ui,sans-serif;z-index:59;pointer-events:none;'
+    + 'display:flex;gap:8px;align-items:center;';
+  compass.innerHTML = '<span id="survival-compass-arrow" style="display:inline-block;color:#ffb703;">▲</span><span id="survival-compass-text"></span>';
+  document.body.appendChild(compass);
+
+  function currentTarget() {
+    const q = quests();
+    if (!q) return null;
+    try {
+      const active = q.getSide().find(s => s.status === 'active');
+      if (active) {
+        let loc = null;
+        if (active.type === 'visit') loc = active.locations[Math.min(active.progress.step || 0, active.locations.length - 1)];
+        else if (active.type === 'stay' || active.type === 'purchaseVisit') loc = active.destination;
+        else if (active.type === 'choice') loc = active.locId;
+        if (loc) return { loc, label: active.title };
+      }
+      const main = q.getMain && q.getMain();
+      if (main && main.current && main.current.type === 'spend' && main.current.category) {
+        const loc = MAIN_LOC[main.current.category];
+        if (loc) return { loc, label: main.current.title };
+      }
+    } catch { /* 存档未就绪 */ }
+    return null;
+  }
+
+  function renderCompass() {
+    if (!controls) return;
+    const target = currentTarget();
+    if (!target) { compass.hidden = true; return; }
+    const anchor = ANCHORS.find(a => a.ids.includes(target.loc));
+    if (!anchor) { compass.hidden = true; return; }
+    const cam = controls.camera;
+    const dx = anchor.x - cam.x;
+    const dz = anchor.z - cam.z;
+    const dist = Math.hypot(dx, dz);
+    const name = LOC_NAMES[target.loc] || target.loc;
+    compass.hidden = false;
+    compass.querySelector('#survival-compass-text').textContent =
+      dist <= anchor.r ? `${name} · 已到达` : `${name} · ${Math.round(dist)}m`;
+    const f = dx * Math.sin(cam.yaw) + dz * -Math.cos(cam.yaw);
+    const r = dx * Math.cos(cam.yaw) + dz * Math.sin(cam.yaw);
+    const deg = Math.atan2(r, f) * 180 / Math.PI;
+    compass.querySelector('#survival-compass-arrow').style.transform = `rotate(${deg.toFixed(0)}deg)`;
+  }
+
   let controls = null;
   let lastHour = -1;
   const staySeconds = {};
@@ -72,7 +130,10 @@
   function syncHour() {
     const q = quests();
     if (!q || typeof q.setHour !== 'function') return;
-    const hour = new Date().getHours();
+    // 用父页面的 Date（已按「回家睡觉」偏移），保证营业时段与游戏日期一致。
+    let now;
+    try { now = new window.parent.Date(); } catch { now = new Date(); }
+    const hour = now.getHours();
     if (hour === lastHour) return;
     lastHour = hour;
     try { q.setHour(hour); } catch { /* 忽略单次注入失败 */ }
@@ -180,6 +241,7 @@
       clearInterval(waitControls);
       snapshotSides();
       setInterval(tick, 1000);
+      setInterval(renderCompass, 250);
     }
   }, 500);
 })();

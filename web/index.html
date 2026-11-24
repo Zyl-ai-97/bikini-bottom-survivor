@@ -41,6 +41,28 @@
     <video id="dive-bubbles" aria-hidden="true" muted playsinline preload="auto" disablepictureinpicture></video>
     <p id="dive-status" role="status" hidden>浅海暂时无法打开，可以稍后再点木牌重试。</p>
   </main>
+  <script>
+    // 生存季日期推进：按 localStorage 的 bs-day-offset 平移“今天”，
+    // 使任务/事件/通缉衰减可通过「回家睡觉」逐日推进。偏移为 0 时不做任何包装。
+    (function () {
+      try {
+        var off = parseInt(localStorage.getItem('bs-day-offset') || '0', 10) || 0;
+        if (!off) return;
+        var RealDate = window.Date;
+        var shift = off * 86400000;
+        function ShiftedDate() {
+          if (arguments.length === 0) return new RealDate(RealDate.now() + shift);
+          if (arguments.length === 1) return new RealDate(arguments[0]);
+          return new RealDate(arguments[0], arguments[1], arguments[2] || 0, arguments[3] || 0, arguments[4] || 0, arguments[5] || 0, arguments[6] || 0);
+        }
+        ShiftedDate.now = function () { return RealDate.now() + shift; };
+        ShiftedDate.parse = RealDate.parse;
+        ShiftedDate.UTC = RealDate.UTC;
+        ShiftedDate.prototype = RealDate.prototype;
+        window.Date = ShiftedDate;
+      } catch (e) { /* 偏移失败时按真实日期运行 */ }
+    })();
+  </script>
   <script src="./survival/survival-logic.js" defer></script>
   <script src="./survival/survival-quest.js" defer></script>
   <script src="./survival/survival-hud.js" defer></script>

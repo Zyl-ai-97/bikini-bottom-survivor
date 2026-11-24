@@ -332,3 +332,10 @@ body.survival-locked .survival-joystick { display: none; }
 }
 .survival-dialog b { color: #ffb703; }
 .survival-dialog p { margin: 4px 0 0; font-size: 13px; line-height: 1.5; }
+
+/* v4：渐黑渐亮过场 + 每日小结 */
+.survival-fade {
+  position: fixed; inset: 0; background: #000; opacity: 0;
+  transition: opacity 0.35s ease; z-index: 300; pointer-events: none;
+}
+.survival-fade.is-on { opacity: 1; }

@@ -109,6 +109,7 @@
           <div class="survival-rep__track"><div id="survival-rep-bar" class="survival-rep__bar"></div></div>
         </div>
         <div class="survival-stat"><span class="survival-hud__label">护盾</span><b id="survival-shield">0</b></div>
+        <div class="survival-stat"><span class="survival-hud__label">立足进度</span><b id="survival-day-badge">第 1/30 天</b></div>
         <button id="survival-tour-btn" class="survival-mini-btn" type="button" aria-pressed="false">观光</button>
         <button id="survival-task-btn" class="survival-mini-btn" type="button">任务</button>
         <button id="survival-report-btn" class="survival-mini-btn" type="button">战报</button>
@@ -177,6 +178,25 @@
       </div>
     </div>
 
+    <div id="survival-fade" class="survival-fade" hidden></div>
+
+    <div id="survival-summary" class="survival-overlay" hidden>
+      <div class="survival-panel">
+        <h2 class="survival-panel__title">每日小结</h2>
+        <dl class="survival-report-list">
+          <dt>昨天花费</dt><dd id="survival-sum-spent"></dd>
+          <dt>当前连击</dt><dd id="survival-sum-streak"></dd>
+          <dt>通缉</dt><dd id="survival-sum-wanted"></dd>
+          <dt>声望</dt><dd id="survival-sum-rep"></dd>
+          <dt>今日事件</dt><dd id="survival-sum-event"></dd>
+          <dt>今日支线</dt><dd id="survival-sum-side"></dd>
+        </dl>
+        <div class="survival-actions">
+          <button id="survival-summary-close" type="button" class="survival-primary">开始新的一天</button>
+        </div>
+      </div>
+    </div>
+
     <div id="survival-phone-overlay" class="survival-overlay survival-phone-wrap" hidden>
       <div id="survival-phone" class="survival-phone" role="dialog" aria-label="海螺手机">
         <div class="survival-phone__speaker"></div>
@@ -216,6 +236,7 @@
                 <dt>支线完成</dt><dd id="survival-report-side"></dd>
               </dl>
               <div class="survival-actions survival-actions--report">
+                <button id="survival-sleep" type="button">回家睡觉（推进一天）</button>
                 <button id="survival-report-demo" type="button">一键填充演示数据</button>
                 <button id="survival-report-reset" type="button">重置存档</button>
                 <button id="survival-report-close" type="button" class="survival-primary">关闭</button>
@@ -233,7 +254,7 @@
   `;
   document.body.appendChild(host);
 
-  const overlays = [$('survival-modal'), $('survival-setup'), $('survival-phone-overlay')];
+  const overlays = [$('survival-modal'), $('survival-setup'), $('survival-phone-overlay'), $('survival-summary')];
   const tabs = {
     quest: $('survival-tab-quest'),
     report: $('survival-tab-report'),
@@ -349,6 +370,57 @@
     text($('survival-shield'), shield);
   }
 
+  // —— 日期推进（DESIGN-v4 第 2、3 项）：起始日记录在 bs-start-date，偏移在 bs-day-offset ——
+  const dayKeyOf = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  function dayIndex() {
+    try {
+      const today = dayKeyOf(new Date());
+      let start = localStorage.getItem('bs-start-date');
+      if (!start) { start = today; localStorage.setItem('bs-start-date', start); }
+      const diff = Math.round((Date.parse(today + 'T00:00:00Z') - Date.parse(start + 'T00:00:00Z')) / 86400000);
+      return Math.max(1, diff + 1);
+    } catch { return 1; }
+  }
+  function renderDayBadge() {
+    const extra = call(quests, 'getReportExtra') ?? {};
+    const grade = pick(extra, ['grade']);
+    const idx = dayIndex();
+    text($('survival-day-badge'), idx <= 30 ? `第 ${idx}/30 天${grade ? ' · ' + grade : ''}` : `第 ${idx} 天${grade ? ' · ' + grade : ''}`);
+  }
+
+  function showSummary() {
+    const report = api.getReport();
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yKey = dayKeyOf(yesterday);
+    const yDay = (report.dailyBreakdown || []).find(day => day.date === yKey);
+    text($('survival-sum-spent'), yDay ? `${money(yDay.totalSpent)}（${yDay.expenseCount} 笔）` : '无消费');
+    text($('survival-sum-streak'), `${report.streak} 天`);
+    text($('survival-sum-wanted'), `${readWanted()} 星`);
+    const rep = call(quests, 'getReputation') ?? {};
+    text($('survival-sum-rep'), `${pick(rep, ['tierName', 'tier']) || '无名小卒'}（${pick(rep, ['value']) || 0}）`);
+    const event = call(quests, 'getDailyEvent');
+    const v3event = event ? (v3Content.events || {})[event.id] || {} : {};
+    text($('survival-sum-event'), event ? (v3event.title || event.title) : '—');
+    const sides = call(quests, 'getSide') ?? [];
+    text($('survival-sum-side'), sides.length ? sides.map(s => (questLines.sideQuests || {})[s.id]?.title || s.title).join('、') : '—');
+    open($('survival-summary'));
+  }
+
+  function sleepToNextDay() {
+    const fade = $('survival-fade');
+    fade.hidden = false;
+    requestAnimationFrame(() => fade.classList.add('is-on'));
+    setTimeout(() => {
+      try {
+        const off = (parseInt(localStorage.getItem('bs-day-offset') || '0', 10) || 0) + 1;
+        localStorage.setItem('bs-day-offset', String(off));
+        localStorage.setItem('bs-just-slept', '1');
+      } catch { /* 存储不可用时仍重载 */ }
+      try { location.reload(); } catch { fade.classList.remove('is-on'); fade.hidden = true; }
+    }, 420);
+  }
+
   function refresh() {
     const stats = api.getStats();
     const derived = call(quests, 'getDerived');
@@ -364,6 +436,7 @@
     renderWanted(false);
     renderReputation();
     renderShield();
+    renderDayBadge();
     updateClosedHint();
   }
 
@@ -444,6 +517,21 @@
     return button;
   }
 
+  const LOC_NAMES = {
+    diner: '蟹堡王', chum: '海之霸', neighbors: '邻居区', school: '航船学校',
+    market: '贝壳超市', jellyfield: '水母田', cove: '海湾', ridge: '山脊',
+    horn: '号角礁', street: '海螺街', conch: '海螺街',
+  };
+  function sideTargetName(item) {
+    if (item.type === 'visit' && Array.isArray(item.locations)) {
+      const loc = item.locations[Math.min((item.progress || {}).step || 0, item.locations.length - 1)];
+      return LOC_NAMES[loc];
+    }
+    if (item.type === 'stay' || item.type === 'purchaseVisit') return LOC_NAMES[item.destination];
+    if (item.type === 'choice') return LOC_NAMES[item.locId];
+    return undefined;
+  }
+
   function sideStatusText(item) {
     const progress = item.progress || {};
     switch (item.status) {
@@ -451,9 +539,11 @@
       case 'failed': return '已失败';
       case 'done': return item.claimed ? '已交付' : '已完成，待交付';
       case 'active': {
-        if (item.type === 'visit' && Array.isArray(item.locations)) return `进行中 · 到访 ${progress.step || 0}/${item.locations.length}`;
-        if (item.type === 'stay') return `进行中 · 已停留 ${Math.floor(progress.seconds || 0)}/${item.seconds || 0} 秒`;
-        if (item.type === 'purchaseVisit') return '进行中 · 先消费再到访交付点';
+        const target = sideTargetName(item);
+        const targetText = target ? ` · 去${target}` : '';
+        if (item.type === 'visit' && Array.isArray(item.locations)) return `进行中 · 到访 ${progress.step || 0}/${item.locations.length}${targetText}`;
+        if (item.type === 'stay') return `进行中 · 已停留 ${Math.floor(progress.seconds || 0)}/${item.seconds || 0} 秒${targetText}`;
+        if (item.type === 'purchaseVisit') return `进行中 · 先消费再到访交付点${targetText}`;
         if (item.type === 'choice') return '进行中 · 等你抉择';
         return '进行中';
       }
@@ -720,6 +810,8 @@
   $('survival-report-close').addEventListener('click', closePhone);
   for (const key of Object.keys(tabs)) tabs[key].addEventListener('click', () => showTab(key));
   $('survival-start').addEventListener('click', finishSetup);
+  $('survival-sleep').addEventListener('click', sleepToNextDay);
+  $('survival-summary-close').addEventListener('click', () => close($('survival-summary')));
   $('survival-report-demo').addEventListener('click', () => {
     const demo = api.generateDemoData();
     if (typeof quests.seedDemo === 'function') quests.seedDemo(demo);
@@ -855,5 +947,13 @@
   };
 
   refresh();
-  afterIntro(() => { if (needSetup()) showSetup(); });
+  afterIntro(() => {
+    if (needSetup()) { showSetup(); return; }
+    let justSlept = false;
+    try {
+      justSlept = localStorage.getItem('bs-just-slept') === '1';
+      if (justSlept) localStorage.removeItem('bs-just-slept');
+    } catch { /* 忽略 */ }
+    if (justSlept) showSummary();
+  });
 })();
