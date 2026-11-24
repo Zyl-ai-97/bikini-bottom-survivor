@@ -315,3 +315,20 @@ body.survival-locked .survival-joystick { display: none; }
   .survival-crit::before, .survival-crit__line, .survival-wanted.is-bump .survival-stars i.is-on,
   .survival-hp__fill.is-income { animation-duration: 0.01ms; }
 }
+
+/* R2 集成补丁：任务按钮 / 对话面板 / 事件块 */
+.survival-quest-actions { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+.survival-quest-btn {
+  background: #ffb703; color: #14313d; border: none; border-radius: 999px;
+  padding: 4px 14px; font-size: 13px; font-weight: 700; cursor: pointer;
+}
+.survival-quest-btn:active { transform: scale(0.96); }
+.survival-side-item span { display: block; color: #b8c9d1; font-size: 12px; margin-top: 2px; }
+.survival-event-box b { display: block; }
+.survival-event-box span { display: block; color: #b8c9d1; font-size: 12px; margin-top: 2px; }
+.survival-dialog {
+  margin-top: 12px; background: rgba(255, 183, 3, 0.12);
+  border: 1px solid rgba(255, 183, 3, 0.45); border-radius: 12px; padding: 10px 12px;
+}
+.survival-dialog b { color: #ffb703; }
+.survival-dialog p { margin: 4px 0 0; font-size: 13px; line-height: 1.5; }

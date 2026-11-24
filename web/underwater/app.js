@@ -183,6 +183,8 @@
     onManual: () => selectWaypoint(null)
   });
 
+  window.__diveControls = controls;
+
   const openingCamera = { ...controls.camera };
 
   for (const button of waypoints) {

@@ -70,6 +70,24 @@
     .then(data => { contentAchievements = data && data.achievements ? data.achievements : {}; renderAchievements(); })
     .catch(() => { /* 文案文件缺失时仍用内置表展示成就名 */ });
 
+  // 豆包 R2 任务台词与 v3 文案：只做展示层覆盖（标题/台词），逻辑仍以 BudgetQuests 为准。
+  let questLines = {};
+  let v3Content = {};
+  const REP_TIER_NAMES = ['无名小卒', '街坊熟人', '比奇堡红人', '小镇传奇'];
+  if (typeof fetch === 'function') {
+    fetch(new URL('content-quests.json', base).href)
+      .then(response => response.json())
+      .then(data => { questLines = data || {}; renderQuests(); })
+      .catch(() => { /* 台词缺失时用逻辑层 desc 兜底 */ });
+    fetch(new URL('content-v3.json', base).href)
+      .then(response => response.json())
+      .then(data => { v3Content = data || {}; renderEvent(); renderQuests(); })
+      .catch(() => { /* v3 文案缺失时用逻辑层标题兜底 */ });
+  }
+  const splitLines = value => typeof value === 'string'
+    ? value.split('。').map(part => part.trim()).filter(Boolean).map(part => part + '。')
+    : [];
+
   const host = document.createElement('div');
   host.innerHTML = `
     <section id="survival-hud" class="survival-hud" aria-label="生存状态">
@@ -174,10 +192,13 @@
           </nav>
           <div class="survival-phone__pages">
             <section id="survival-task-panel" class="survival-phone__page" role="tabpanel">
+              <h3 class="survival-panel__title">今日事件</h3>
+              <div id="survival-event-box" class="survival-event-box"></div>
               <h3 class="survival-panel__title">当前主线</h3>
               <div id="survival-main-quest" class="survival-quest"></div>
               <h3 class="survival-panel__title">每日支线</h3>
               <div id="survival-side-list" class="survival-side-list"></div>
+              <div id="survival-dialog" class="survival-dialog" hidden></div>
             </section>
             <section id="survival-report" class="survival-phone__page" role="tabpanel" hidden>
               <h3 class="survival-panel__title">战报</h3>
@@ -322,7 +343,7 @@
   }
 
   function renderShield() {
-    const shield = call(quests, 'getShield') ?? call(api, 'getShield')
+    const shield = call(quests, 'getShields') ?? call(quests, 'getShield') ?? call(api, 'getShield')
       ?? pick(call(quests, 'getReportExtra') ?? {}, ['shield', 'shields'])
       ?? pick(call(api, 'getStats') ?? {}, ['shield', 'shields']) ?? 0;
     text($('survival-shield'), shield);
@@ -330,11 +351,14 @@
 
   function refresh() {
     const stats = api.getStats();
+    const derived = call(quests, 'getDerived');
+    const hpValue = derived && Number.isFinite(derived.hp) ? derived.hp : stats.hp;
+    const balanceValue = derived && Number.isFinite(derived.balance) ? derived.balance : stats.balance;
     const hp = $('survival-hp');
-    hp.style.width = `${Math.max(0, Math.min(100, Number(stats.hp) || 0))}%`;
-    hp.classList.toggle('is-mid', stats.hp <= 50 && stats.hp >= 25);
-    hp.classList.toggle('is-low', stats.hp < 25);
-    text($('survival-balance'), money(stats.balance));
+    hp.style.width = `${Math.max(0, Math.min(100, Number(hpValue) || 0))}%`;
+    hp.classList.toggle('is-mid', hpValue <= 50 && hpValue >= 25);
+    hp.classList.toggle('is-low', hpValue < 25);
+    text($('survival-balance'), money(balanceValue));
     text($('survival-today'), `${money(stats.todaySpent)} / ${money(stats.dailyBudget)}`);
     text($('survival-streak'), stats.streak);
     renderWanted(false);
@@ -370,8 +394,9 @@
 
   function renderReport() {
     const report = api.getReport();
+    const derived = call(quests, 'getDerived');
     text($('survival-report-days'), report.dayNumber);
-    text($('survival-report-hp'), report.hp);
+    text($('survival-report-hp'), derived && Number.isFinite(derived.hp) ? derived.hp : report.hp);
     text($('survival-report-achievements'), report.unlockedAchievements.length ? report.unlockedAchievements.join('、') : '—');
     text($('survival-report-streak'), `${report.streak} / ${report.longestStreak}`);
     let worst = null;
@@ -383,49 +408,183 @@
     text($('survival-report-crits'), Object.keys(report.critCounts).map(key => `${key} ${report.critCounts[key]}`).join(' · '));
 
     const extra = call(quests, 'getReportExtra') ?? {};
-    text($('survival-report-grade'), pick(extra, ['grade', 'rating', 'scoreGrade']));
-    text($('survival-report-rep'), pick(extra, ['reputationTier', 'tier', 'reputation']));
+    const grade = pick(extra, ['grade', 'rating', 'scoreGrade']);
+    const score = pick(extra, ['score']);
+    text($('survival-report-grade'), grade ? (score !== undefined ? `${grade}（${Math.round(Number(score))} 分）` : grade) : undefined);
+    const tierRaw = pick(extra, ['reputationTier', 'tier', 'reputation']);
+    text($('survival-report-rep'), typeof tierRaw === 'number' ? REP_TIER_NAMES[tierRaw] : tierRaw);
     text($('survival-report-wanted'), `${pick(extra, ['wantedStars', 'wanted', 'stars'])} 星`);
     text($('survival-report-main'), pick(extra, ['mainDone', 'mainCompleted', 'main']));
-    text($('survival-report-side'), pick(extra, ['sideDone', 'sideCompleted', 'side']));
+    text($('survival-report-side'), pick(extra, ['sideDoneTotal', 'sideDone', 'sideCompleted', 'side']));
+  }
+
+  function showDialog(npc, lines) {
+    const box = $('survival-dialog');
+    if (!box) return;
+    box.textContent = '';
+    if (!lines || !lines.length) { box.hidden = true; return; }
+    const name = document.createElement('b');
+    name.textContent = npc || '';
+    box.appendChild(name);
+    for (const line of lines) {
+      const p = document.createElement('p');
+      p.textContent = line;
+      box.appendChild(p);
+    }
+    box.hidden = false;
+  }
+
+  function questButton(action, id, label) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'survival-quest-btn';
+    button.dataset.action = action;
+    if (id) button.dataset.id = id;
+    button.textContent = label;
+    return button;
+  }
+
+  function sideStatusText(item) {
+    const progress = item.progress || {};
+    switch (item.status) {
+      case 'offered': return '未接取';
+      case 'failed': return '已失败';
+      case 'done': return item.claimed ? '已交付' : '已完成，待交付';
+      case 'active': {
+        if (item.type === 'visit' && Array.isArray(item.locations)) return `进行中 · 到访 ${progress.step || 0}/${item.locations.length}`;
+        if (item.type === 'stay') return `进行中 · 已停留 ${Math.floor(progress.seconds || 0)}/${item.seconds || 0} 秒`;
+        if (item.type === 'purchaseVisit') return '进行中 · 先消费再到访交付点';
+        if (item.type === 'choice') return '进行中 · 等你抉择';
+        return '进行中';
+      }
+      default: return item.status || '';
+    }
+  }
+
+  function renderEventBox() {
+    const box = $('survival-event-box');
+    if (!box) return;
+    box.textContent = '';
+    const event = call(quests, 'getDailyEvent');
+    if (!event) { box.textContent = '—'; return; }
+    const v3event = (v3Content.events || {})[event.id] || {};
+    const title = document.createElement('b');
+    title.textContent = v3event.title || event.title || '—';
+    const desc = document.createElement('span');
+    desc.textContent = v3event.desc || event.desc || '';
+    box.append(title, desc);
+    const actions = document.createElement('div');
+    actions.className = 'survival-quest-actions';
+    if (event.id === 'plankton-trap' && event.status === 'active') {
+      actions.append(
+        questButton('event-go', null, v3event.goOption || '赴约'),
+        questButton('event-refuse', null, v3event.refuseOption || '拒绝'),
+      );
+    } else if (event.status === 'done') {
+      actions.append(questButton('event-claim', null, '领取奖励'));
+    } else if (event.status === 'claimed') {
+      const done = document.createElement('small');
+      done.textContent = '今日已领取';
+      actions.append(done);
+    } else {
+      const hint = document.createElement('small');
+      hint.textContent = '进行中 · 在小镇里完成它';
+      actions.append(hint);
+    }
+    box.appendChild(actions);
   }
 
   function renderQuests() {
-    const data = call(quests, 'getQuests') ?? call(api, 'getQuests') ?? {};
-    const main = pick(data, ['main', 'current', 'mainQuest']) ?? call(quests, 'getMainQuest');
+    renderEventBox();
     const mainBox = $('survival-main-quest');
     mainBox.textContent = '';
+    const main = call(quests, 'getMain');
     if (!main) {
       mainBox.textContent = '—';
-    } else if (typeof main === 'string') {
-      mainBox.textContent = main;
+    } else if (main.cleared || !main.current) {
+      mainBox.textContent = `主线全清 ${main.doneCount}/${main.total} · 安居乐业`;
     } else {
       const title = document.createElement('b');
-      title.textContent = pick(main, ['title', 'name']) || '—';
+      title.textContent = main.current.title || '—';
       const desc = document.createElement('span');
-      desc.textContent = pick(main, ['desc', 'description', 'progress']) || '';
+      desc.textContent = main.current.desc || '';
       const status = document.createElement('small');
-      status.textContent = pick(main, ['status', 'state']) || '';
+      const flavor = (questLines.mainQuests || {})[main.current.id];
+      status.textContent = `进度 ${main.doneCount}/${main.total}` + (flavor ? ` · ${flavor}` : '');
       mainBox.append(title, desc, status);
     }
-    const side = pick(data, ['side', 'sides', 'sideQuests']) ?? call(quests, 'getSide') ?? [];
+
     const list = $('survival-side-list');
     list.textContent = '';
-    const items = Array.isArray(side) ? side : [];
+    const items = call(quests, 'getSide') ?? [];
     if (!items.length) list.textContent = '—';
     for (const item of items) {
+      const lines = (questLines.sideQuests || {})[item.id] || {};
       const row = document.createElement('div');
       row.className = 'survival-side-item';
-      const name = typeof item === 'string' ? item : pick(item, ['title', 'name']) || '—';
-      const status = typeof item === 'string' ? '' : pick(item, ['status', 'state', 'progress']) || '';
       const label = document.createElement('b');
-      label.textContent = name;
+      label.textContent = `${item.npc || lines.npc || ''} · ${lines.title || item.title || '—'}`;
       const state = document.createElement('small');
-      state.textContent = status;
+      state.textContent = sideStatusText(item);
       row.append(label, state);
+      const desc = document.createElement('span');
+      desc.textContent = item.status === 'active' && lines.progress ? lines.progress : (item.desc || '');
+      row.appendChild(desc);
+      const actions = document.createElement('div');
+      actions.className = 'survival-quest-actions';
+      if (item.status === 'offered') {
+        actions.append(questButton('accept', item.id, '接取'));
+      } else if (item.status === 'active' && item.type === 'choice') {
+        actions.append(
+          questButton('choice-accept', item.id, lines.acceptOption || '吃一支'),
+          questButton('choice-reject', item.id, lines.rejectOption || '改天吧'),
+        );
+      } else if (item.status === 'done' && !item.claimed) {
+        actions.append(questButton('claim', item.id, '交付'));
+      }
+      if (actions.childNodes.length) row.appendChild(actions);
       list.appendChild(row);
     }
   }
+
+  function afterQuestAction() {
+    refresh();
+    renderQuests();
+    renderEvent();
+  }
+
+  document.addEventListener('click', event => {
+    const button = event.target.closest ? event.target.closest('.survival-quest-btn') : null;
+    if (!button) return;
+    const { action, id } = button.dataset;
+    const lines = (questLines.sideQuests || {})[id] || {};
+    try {
+      if (action === 'accept') {
+        quests.acceptQuest(id);
+        showDialog(lines.npc, splitLines(lines.accept));
+      } else if (action === 'claim') {
+        const result = quests.claimQuest(id);
+        showDialog(lines.npc, splitLines(lines.done));
+        const income = result && result.reward ? result.reward.income : 0;
+        const shield = result && result.reward ? result.reward.shield : 0;
+        if (income > 0) toast(`任务交付：+${money(income)}`);
+        else if (shield > 0) toast(`任务交付：护盾 +${shield}`);
+      } else if (action === 'choice-accept' || action === 'choice-reject') {
+        quests.chooseOption(id, action === 'choice-accept' ? 'accept' : 'reject');
+        showDialog(lines.npc, splitLines(lines.done));
+      } else if (action === 'event-go' || action === 'event-refuse') {
+        quests.chooseEventOption(action === 'event-go' ? 'go' : 'refuse');
+        toast(action === 'event-go' ? '已赴约：今天在海之霸消费一次即可完成。' : '已拒绝：护盾 +1。');
+      } else if (action === 'event-claim') {
+        const result = quests.claimEvent();
+        const income = result && result.reward ? result.reward.income : 0;
+        toast(income > 0 ? `事件奖励：+${money(income)}` : '事件奖励已领取。');
+      }
+    } catch (error) {
+      toast(error && error.message ? error.message : '操作失败');
+    }
+    afterQuestAction();
+  });
 
   function renderAchievements() {
     const unlocked = new Set((call(api, 'getReport')?.unlockedAchievements) || (call(api, 'getStats')?.unlockedAchievements) || []);
@@ -452,12 +611,14 @@
     const event = call(quests, 'getDailyEvent');
     const banner = $('survival-event-banner');
     if (!event) { banner.hidden = true; return; }
-    text($('survival-event-title'), pick(event, ['title', 'name']));
-    text($('survival-event-desc'), pick(event, ['desc', 'description']));
-    const claimable = pick(event, ['claimable', 'canClaim']) === true
-      || pick(event, ['status', 'state']) === 'ready';
+    const v3event = (v3Content.events || {})[event.id] || {};
+    text($('survival-event-title'), v3event.title || pick(event, ['title', 'name']));
+    text($('survival-event-desc'), v3event.desc || pick(event, ['desc', 'description']));
+    const status = pick(event, ['status', 'state']);
+    const claimable = status === 'done';
     banner.classList.toggle('is-claimable', claimable);
     $('survival-event-claim-hint').hidden = !claimable;
+    $('survival-event-claim-hint').textContent = status === 'claimed' ? '今日奖励已领取' : '点击交付事件';
     banner.dataset.eventId = pick(event, ['id', 'key']) || '';
     banner.hidden = false;
   }
@@ -465,10 +626,9 @@
   function updateClosedHint() {
     const checked = document.querySelector('input[name="survival-category"]:checked');
     const place = checked ? CATEGORY_PLACE[checked.value] : undefined;
-    const hour = call(quests, 'getHour') ?? call(api, 'getHour');
     let closed = false;
-    if (place && typeof quests.isOpen === 'function' && hour !== undefined) {
-      closed = call(quests, 'isOpen', place, hour) === false;
+    if (place && typeof quests.isOpen === 'function') {
+      closed = call(quests, 'isOpen', place) === false;
     }
     $('survival-closed-hint').hidden = !closed;
   }
@@ -517,13 +677,25 @@
     const amount = Number($('survival-amount').value);
     if (!Number.isFinite(amount) || amount <= 0) { $('survival-amount').focus({ preventScroll: true }); return; }
     const checked = document.querySelector('input[name="survival-category"]:checked');
-    const result = api.addExpense({
+    const category = checked ? checked.value : '食堂餐饮';
+    const place = CATEGORY_PLACE[category];
+    const wasClosed = place && typeof quests.isOpen === 'function' ? call(quests, 'isOpen', place) === false : false;
+    const addExpense = typeof quests.addExpense === 'function' ? quests.addExpense : api.addExpense;
+    const result = addExpense({
       amount,
-      category: checked ? checked.value : '食堂餐饮',
+      category,
       note: $('survival-note').value,
     });
+    // 集成层职责：海之霸消费打标 + 涨星；打烊时段消费涨星。
+    if (place === 'chum' && typeof quests.markChumSpent === 'function') {
+      call(quests, 'markChumSpent');
+      call(quests, 'addWanted', 'chum');
+    } else if (wasClosed && typeof quests.addWanted === 'function') {
+      call(quests, 'addWanted', 'after-hours');
+    }
     renderWanted(true);
     refresh();
+    renderQuests();
     showFeedback(result.feedback, amount);
     $('survival-form').reset();
     updateClosedHint();
@@ -549,9 +721,12 @@
   for (const key of Object.keys(tabs)) tabs[key].addEventListener('click', () => showTab(key));
   $('survival-start').addEventListener('click', finishSetup);
   $('survival-report-demo').addEventListener('click', () => {
-    api.save(api.generateDemoData());
+    const demo = api.generateDemoData();
+    if (typeof quests.seedDemo === 'function') quests.seedDemo(demo);
+    else api.save(demo);
     refresh();
     renderReport();
+    renderQuests();
   });
   $('survival-report-reset').addEventListener('click', () => {
     api.reset();
@@ -566,9 +741,16 @@
   $('survival-event-banner').addEventListener('click', () => {
     if (!$('survival-event-banner').classList.contains('is-claimable')) return;
     if (typeof quests.claimEvent !== 'function') return;
-    call(quests, 'claimEvent', $('survival-event-banner').dataset.eventId || undefined);
+    try {
+      const result = quests.claimEvent();
+      const income = result && result.reward ? result.reward.income : 0;
+      if (income > 0) toast(`事件奖励：+${money(income)}`);
+    } catch (error) {
+      toast(error && error.message ? error.message : '事件尚未完成');
+    }
     refresh();
     renderEvent();
+    renderQuests();
   });
   const scene = document.querySelector('.seascape');
   if (scene) {
