@@ -16,7 +16,7 @@
   const overlay = document.createElement('div');
   overlay.id = 'survival-cutscene';
   overlay.hidden = true;
-  overlay.style.cssText = 'position:fixed;inset:0;background:#000;z-index:400;display:flex;'
+  overlay.style.cssText = 'position:fixed;inset:0;background:#000;z-index:400;display:none;pointer-events:none;'
     + 'align-items:center;justify-content:center;opacity:0;transition:opacity .3s ease;';
   const img = document.createElement('img');
   img.alt = '';
@@ -31,12 +31,13 @@
     if (!frames || playing) return;
     playing = true;
     overlay.hidden = false;
+    overlay.style.display = 'flex';
     requestAnimationFrame(() => { overlay.style.opacity = '1'; });
     let i = 0;
     const showFrame = () => {
       if (i >= frames.length) {
         overlay.style.opacity = '0';
-        setTimeout(() => { overlay.hidden = true; playing = false; }, 320);
+        setTimeout(() => { overlay.hidden = true; overlay.style.display = 'none'; playing = false; }, 320);
         return;
       }
       img.style.transform = i % 2 ? 'scale(1.04) rotate(1deg)' : 'scale(1)';

@@ -147,7 +147,7 @@ export function createSeaAudio({ bubbleSoundUrl } = {}) {
     surf.buffer = coastalSurf(context);
     surf.loop = true;
     const surfLevel = context.createGain();
-    surfLevel.gain.value = 0.78;
+    surfLevel.gain.value = 0.3;
     surf.connect(surfLevel).connect(ambient);
     surf.start();
     const noise = breezeNoise(context);
