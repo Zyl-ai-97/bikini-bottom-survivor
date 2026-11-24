@@ -12,13 +12,13 @@
 
 ## 第一轮（待派发，派活包见《四方配合包-按GitHub原项目.md》第 4 节）
 
-- [ ] T1 GPT：实现 `web/survival/survival-logic.js`，暴露 `window.BudgetSurvivor` 全部接口 + 自测数据（配合包 4.1）
-- [ ] T2 HY：`web/survival/survival-hud.js` + `survival-hud.css`，父页面 HUD、记一笔弹窗、暴击层、战报层、两个钩子（配合包 4.2）
+- [x] T1 GPT：实现 `web/survival/survival-logic.js`，暴露 `window.BudgetSurvivor` 全部接口 + 自测数据（配合包 4.1）——已合并（提交 d9d0ee1），Muse 实测全过；注意 feedback 文案目前是 TODO 占位符，等 T3 文案到位后替换
+- [x] T2 HY：`web/survival/survival-hud.js` + `survival-hud.css`，父页面 HUD、记一笔弹窗、暴击层、战报层、两个钩子（配合包 4.2）——已交付 A（深色 RPG）/B（简洁）两版，JS 相同仅 CSS 不同；A 版已定为正式版 `survival-hud.js/css`，两版原件同存仓库备选
 - [ ] T3 豆包：`web/survival/content.json`，暴击/连击文案与 12 成就文案（配合包 4.3）
-- [ ] T4 Muse：集成层（把 `web/survival/` 接进 `web/index.html`、开局设置与回程战报钩子），等 T1–T3 合入后联调
+- [x] T4 Muse：集成层（把 `web/survival/` 接进 `web/index.html`、开局设置与回程战报钩子）——已接入并通过本地 DOM 联调：开局设置弹出、记 150 元奶茶后余额 ¥1350/HP 90%/重度暴击红闪、战报数值正确；等 T3 合入后做最终联调
 - [ ] T5 GPT 生图：HUD 图标、成就图标、战报底图（优先 GPT 生图，Muse/豆包补位），成品放 `web/survival/img/`
 
 ## 待办
 
-- [ ] 首次推送：把本地提交与 tag 推回 GitHub（需要 Git 推送授权，见 Muse 汇报）
+- [x] 首次推送：PROJECT/CONTRACT/TASKS 与 survival-logic.js 已推回 GitHub（提交 824c3f7、d9d0ee1）
 - [ ] Qoder 复刻：原型跑通后，按 PROJECT.md 规格在 Qoder 复刻并部署 Qoder Sites
