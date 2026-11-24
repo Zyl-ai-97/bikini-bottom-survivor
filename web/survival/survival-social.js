@@ -143,9 +143,9 @@
     if (!def || !def.img) { img.src = './survival/img/anim/rob-1.png'; return; }
     img.onerror = () => {
       img.onerror = () => { img.style.display = 'none'; };
-      img.src = `./survival/img/npc/${def.img}-normal.png`;
+      img.src = `./survival/img/npc/${def.img}-normal.png?v=1124d`;
     };
-    img.src = `./survival/img/npc/${def.img}-${expr}.png`;
+    img.src = `./survival/img/npc/${def.img}-${expr}.png?v=1124d`;
   }
   function refreshHud() { if (window.SurvivalHUD) window.SurvivalHUD.refresh(); }
   function setLine(text) { $('survival-npc-line').textContent = text; }
