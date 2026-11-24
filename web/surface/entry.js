@@ -1,4 +1,4 @@
-import { createSeaAudio } from './sea-audio.js';
+import { createSeaAudio } from './sea-audio.js?v=1124b';
 
 export async function mountSurface(options = {}) {
   const sound = createSeaAudio({ bubbleSoundUrl: options.bubbleSoundUrl });

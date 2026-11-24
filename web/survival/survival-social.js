@@ -94,6 +94,7 @@
       box-shadow:0 4px 14px rgba(0,0,0,.35);}
     .survival-npc-overlay{position:fixed;inset:0;background:rgba(4,20,28,.55);z-index:150;
       display:flex;align-items:flex-end;justify-content:center;}
+    .survival-npc-overlay[hidden]{display:none !important;}
     .survival-npc-card{background:#0d2b38;color:#e8f4f8;width:min(560px,94vw);border-radius:18px 18px 0 0;
       padding:16px;display:flex;gap:14px;border:1px solid rgba(255,183,3,.35);border-bottom:none;}
     .survival-npc-card img{width:104px;height:104px;object-fit:cover;border-radius:12px;background:#123542;flex:none;}
