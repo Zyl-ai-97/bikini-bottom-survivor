@@ -8,7 +8,8 @@
    */
 
   const STORAGE_KEY = "budget-survivor-state-v1";
-  const CONTENT_PLACEHOLDER = "TODO: content.json";
+  const CONTENT = {"crit": {"normal": ["这一笔花掉了 1.5 天的命。", "血条少了一截。屏幕没红，你心里红了一下。", "小口放血，最容易让人忘记自己在流血。", "消费成功。生存难度上调一格，没有提示音。", "这一下不疼。第三十天才疼。", "你以为只是顺手，系统记成了一记劈砍。", "余额退了半步，你假装没看见，它可一直看着你。", "记账本翻页的声音很轻，跟掉血一样轻。", "又少一顿饭的距离。你现在不饿，月底会。", "这次伤害不大，但它不打算只来一次。"], "heavy": ["重度暴击！这一笔顶得上 3 天生活费。", "血条裂了一道口子。这次你真听见了。", "三天口粮，换一次「就这一次」。你说了几遍了。", "暴击生效。从今晚起，你的敌人叫下半月。", "钱包闪了一下，存档点又远了一步。", "这一笔下去，你从「还行」掉到「有点悬」。", "系统提示：本次消费造成结构性缺钱。", "你不是付了钱，你是提前预支了三天的命。", "屏幕泛红。不是你眼睛的问题，是血条的问题。", "爽了三秒，疼三天半。这笔交易不太划算。"], "lethal": ["致命一击。你不是在消费，你是在给月底挖坑。", "血条见底。这不是花钱，这是提前退场。", "存档损坏。剩下的日子，你只剩食堂和硬扛。", "你把自己打进了贫困剧情线，这一集没有复活点。", "这一笔落下，月底的你已经提前饿了一顿。"], "sugar": ["糖分暴击。一杯奶茶的钱，够在食堂吃一荤一素。", "糖分回蓝，血条打折。甜的进嘴，空的留给月底。", "快乐即时到账，账单分批回收。", "一口甜，三天咸。口味是你自己选的。", "奶茶不解渴。它解的是你不敢看余额的那口气。"]}, "streak": {"3": "连守 3 天。血条还有形状，人也还有样子。", "7": "连守 7 天。这个月你是传说，别急着把自己活成笑话。", "broken": "连守断了。墙上那句「这次一定」，先撕下来吧。"}, "achievements": {"第一滴血": "第一滴血。开局就掉血，说明你确实进场了。", "稳住侠": "稳住侠。你没多花，在这个月已经算超能力。", "自律领主": "自律领主。你把欲望按在地上，它今天没敢动。", "生存大师": "生存大师。别人月底找饭，你月底还有余粮。", "大出血": "大出血。你不是在买东西，你是在给钱包做开颅。", "糖分爱好者": "糖分爱好者。你的血条里，一半是水，一半是奶茶。", "食堂常驻": "食堂常驻。阿姨已经不用再问你要几两饭了。", "一毛不拔": "一毛不拔。你把穷过成了一门手艺，还挺体面。", "夜猫子": "夜猫子。凌晨两点你还在线，余额也没睡。", "早起的鸟": "早起的鸟。早饭吃到热的，这天开局就算赢。", "月底活下来了": "月底活下来了。没有史诗，但你是真通关了。", "精准打击": "精准打击。这一笔花得准，连账本都点了头。"}, "npc": ["今日任务：消费不超过 50 元。做到了我记你一功，做不到明天再来。", "帮我瞄一眼你余额。过了三位数，我今天给你发个称号。", "镇上奶茶今天买一送一。我知道，我是故意的。", "任务：三餐都在食堂解决，一顿外卖都不许。奖品是我替你骄傲一晚上。", "今天只花现金。你试试，手会抖。", "任务：从超市门口走过去，不进去。走过去就算赢。", "把购物车清空一次。不是付款，是删掉。", "今日悬赏：找到一顿 10 块以内的晚饭。找到了，回来领赏。", "任务：今天不打开任何购物 App。开一次，血条掉一格。", "月底之前攒下 30 块。攒到了，我陪你在镇口坐一会儿。"], "reportTips": ["奶茶翻车多半不是喝多了，是喝得太随意。下月先定杯数，再定心情。", "把奶茶从「想喝就喝」改成「一周两杯」。糖分不替你交学费。", "娱乐暴击都挤在周末。下月娱乐钱先锁死额度，超了就从下周饭钱里扣。", "娱乐花销连开两晚就能打穿预算。玩之前先算一句：玩完还剩几天。", "其余花销基本是临时起意。下月留 100 块机动钱，动了就算超支。", "每天睡前看一眼余额。比月底哭一场便宜得多。"], "onboarding": {"title": "1500 生存季：你只剩一条血条", "startButton": "开始生存"}};
+  const pickLine = (lines, seed) => lines[Math.abs(seed) % lines.length];
   const SEASON_DAYS = 30;
   const BUDGET_DAYS = BigInt(SEASON_DAYS);
   const DAY_MS = 86_400_000;
@@ -71,10 +72,10 @@
   }
 
   function evaluationClock(asOf) {
-    if (typeof asOf === "string" && !isDateKey(asOf)) throw new RangeError(CONTENT_PLACEHOLDER);
+    if (typeof asOf === "string" && !isDateKey(asOf)) throw new RangeError("invalid date");
     const date = typeof asOf === "string" ? new Date(`${asOf}T12:00:00`) : new Date(asOf);
     if (!Number.isFinite(date.getTime()) || !isDateKey(localDateKey(date))) {
-      throw new RangeError(CONTENT_PLACEHOLDER);
+      throw new RangeError("invalid date");
     }
     return date;
   }
@@ -279,7 +280,7 @@
   /** 手动确认零消费日时，把 YYYY-MM-DD 加入 state.zeroSpendDays 后调用 save。 */
   function save(state, asOf = new Date()) {
     if (!state || typeof state !== "object" || Array.isArray(state)) {
-      throw new TypeError(CONTENT_PLACEHOLDER);
+      throw new TypeError("invalid state");
     }
     const today = localDateKey(evaluationClock(asOf));
     const next = normalizeState(state, today);
@@ -287,13 +288,13 @@
   }
 
   function createExpense(input, clock) {
-    if (!input || typeof input !== "object") throw new TypeError(CONTENT_PLACEHOLDER);
+    if (!input || typeof input !== "object") throw new TypeError("invalid expense input");
     const createdAt = input.createdAt ?? clock.getTime();
     const id = input.id ?? (window.crypto?.randomUUID?.()
       ?? `${createdAt}-${Math.random().toString(36).slice(2)}`);
     const date = input.date ?? localDateKey(new Date(createdAt));
     const expense = copyExpense({ ...input, id, date, createdAt });
-    if (expense === null) throw new TypeError(CONTENT_PLACEHOLDER);
+    if (expense === null) throw new TypeError("invalid expense");
     return expense;
   }
 
@@ -305,7 +306,7 @@
     const state = useStorage ? readState(today) : normalizeState(stateOrInput, today);
     const expense = createExpense(useStorage ? stateOrInput : input, clock);
     if (state.expenses.some((item) => item.id === expense.id)) {
-      throw new TypeError(CONTENT_PLACEHOLDER);
+      throw new TypeError("duplicate expense id");
     }
     state.expenses.push(expense);
 
@@ -315,8 +316,10 @@
     const monetaryCrit = amountCrit(amount, summary.budget);
     const sugarCrit = isSugarCrit(expense.category, amount);
     const crit = monetaryCrit === "none" && sugarCrit ? "sugar" : monetaryCrit;
-    const messages = [CONTENT_PLACEHOLDER];
-    if (sugarCrit && monetaryCrit !== "none") messages.push(CONTENT_PLACEHOLDER);
+    const messages = [];
+    if (monetaryCrit !== "none") messages.push(pickLine(CONTENT.crit[monetaryCrit], state.expenses.length));
+    if (sugarCrit) messages.push(pickLine(CONTENT.crit.sugar, state.expenses.length));
+    if (messages.length === 0) messages.push("已记账");
     const { hp, balance, todaySpent, streak } = summary.stats;
 
     if (useStorage) persist(state);
