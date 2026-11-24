@@ -7,7 +7,7 @@
 
   const script = document.currentScript;
   const base = script ? new URL('.', script.src) : new URL('./survival/', location.href);
-  const cssUrl = new URL('survival-hud.css', base).href;
+  const cssUrl = new URL('survival-hud.css?v=1124c', base).href;
   if (!Array.from(document.querySelectorAll('link[rel~="stylesheet"]')).some(link => link.href === cssUrl)) {
     const link = document.createElement('link');
     link.rel = 'stylesheet';
@@ -218,6 +218,18 @@
       </div>
     </div>
 
+    <div id="survival-tutorial" class="survival-overlay" hidden>
+      <div class="survival-panel">
+        <h2 class="survival-panel__title">新手教程 <span id="survival-tutorial-step"></span></h2>
+        <div id="survival-tutorial-body" class="survival-tutorial-body"></div>
+        <div class="survival-actions">
+          <button id="survival-tutorial-skip" type="button">跳过教程</button>
+          <button id="survival-tutorial-prev" type="button">上一步</button>
+          <button id="survival-tutorial-next" type="button" class="survival-primary">下一步</button>
+        </div>
+      </div>
+    </div>
+
     <div id="survival-jelly" class="survival-overlay" hidden>
       <div class="survival-panel">
         <h2 class="survival-panel__title">抓水母！剩余 <span id="survival-jelly-time">20</span> 秒 · 已抓 <span id="survival-jelly-count">0</span></h2>
@@ -278,6 +290,7 @@
                 <button id="survival-export" type="button">导出存档码</button>
                 <button id="survival-import" type="button">导入存档码</button>
                 <button id="survival-report-reset" type="button">重置存档</button>
+                <button id="survival-report-tutorial" type="button">新手教程</button>
                 <button id="survival-report-close" type="button" class="survival-primary">关闭</button>
               </div>
             </section>
@@ -308,7 +321,7 @@
   `;
   document.body.appendChild(host);
 
-  const overlays = [$('survival-modal'), $('survival-setup'), $('survival-phone-overlay'), $('survival-summary'), $('survival-intro'), $('survival-jelly')];
+  const overlays = [$('survival-modal'), $('survival-setup'), $('survival-phone-overlay'), $('survival-summary'), $('survival-intro'), $('survival-jelly'), $('survival-tutorial')];
   const tabs = {
     quest: $('survival-tab-quest'),
     report: $('survival-tab-report'),
@@ -1183,10 +1196,43 @@
     }
   });
 
+  // —— 新手教程（可跳过、可重看：战报页有「新手教程」按钮） ——
+  const TUTORIAL_STEPS = [
+    '<b>目标：在比奇堡立足 30 天。</b><p>钱、声望、通缉三条线决定月底的立足评级（D–S）。余额就是你的 HP，归零会触发破产紧急支线。</p>',
+    '<b>移动：先下潜进小镇。</b><p>点海面的木牌下潜。桌面用 WASD 移动、按住拖动转视角；手机用左侧摇杆 + 右半屏滑动。跟着屏幕上的金色罗盘箭头走，它会指向你当前的任务地点。</p>',
+    '<b>记账：花一笔，记一笔。</b><p>点底部「记账」或快捷记账。单笔大额消费会触发暴击（红闪警告）；主线要买的东西，必须到对应地点附近才能记账（到店记账）。不超日预算能攒连击。</p>',
+    '<b>任务与海螺手机。</b><p>手机里有任务、账本、地图、图鉴、战报。靠近 NPC 点「聊天」接每日支线，攒声望、赚外快；声望高了收入有加成。通缉星涨满 5 星就不能接新任务——去海之霸找痞老板可以销赃消星。</p>',
+    '<b>过日子：回家睡觉推进一天。</b><p>回菠萝屋点「回家睡觉」，看完每日小结进入下一天。每天有随机事件和小镇海况，出门前看一眼手机。祝你立足成功！</p>',
+  ];
+  let tutorialIndex = 0;
+  function renderTutorial() {
+    $('survival-tutorial-step').textContent = `${tutorialIndex + 1}/${TUTORIAL_STEPS.length}`;
+    $('survival-tutorial-body').innerHTML = TUTORIAL_STEPS[tutorialIndex];
+    $('survival-tutorial-prev').disabled = tutorialIndex === 0;
+    $('survival-tutorial-next').textContent = tutorialIndex === TUTORIAL_STEPS.length - 1 ? '开始游戏' : '下一步';
+  }
+  function openTutorial() { tutorialIndex = 0; renderTutorial(); open($('survival-tutorial')); }
+  function closeTutorial() {
+    try { localStorage.setItem('bs-tutorial-done', '1'); } catch { /* 忽略 */ }
+    close($('survival-tutorial'));
+  }
+  $('survival-tutorial-next').addEventListener('click', () => {
+    if (tutorialIndex < TUTORIAL_STEPS.length - 1) { tutorialIndex += 1; renderTutorial(); }
+    else closeTutorial();
+  });
+  $('survival-tutorial-prev').addEventListener('click', () => {
+    if (tutorialIndex > 0) { tutorialIndex -= 1; renderTutorial(); }
+  });
+  $('survival-tutorial-skip').addEventListener('click', closeTutorial);
+  $('survival-report-tutorial').addEventListener('click', openTutorial);
+
   $('survival-intro-start').addEventListener('click', () => {
     try { localStorage.setItem('bs-intro-seen', '1'); } catch { /* 忽略 */ }
     close($('survival-intro'));
-    if (window.BSCutscene) window.BSCutscene.play('phone');
+    let tutorialDone = false;
+    try { tutorialDone = localStorage.getItem('bs-tutorial-done') === '1'; } catch { /* 忽略 */ }
+    if (!tutorialDone) openTutorial();
+    else if (window.BSCutscene) window.BSCutscene.play('phone');
   });
   $('survival-report-demo').addEventListener('click', () => {
     const demo = api.generateDemoData();
