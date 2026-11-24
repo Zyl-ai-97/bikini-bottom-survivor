@@ -48,12 +48,12 @@
         </label>
         <fieldset class="survival-fieldset">
           <legend>分类</legend>
-          <label><input type="radio" name="survival-category" value="食堂餐饮" checked>食堂餐饮</label>
-          <label><input type="radio" name="survival-category" value="奶茶零食">奶茶零食</label>
-          <label><input type="radio" name="survival-category" value="超市日用">超市日用</label>
-          <label><input type="radio" name="survival-category" value="出行">出行</label>
-          <label><input type="radio" name="survival-category" value="学习打印">学习打印</label>
-          <label><input type="radio" name="survival-category" value="娱乐社交">娱乐社交</label>
+          <label><input type="radio" name="survival-category" value="食堂餐饮" checked><img class="survival-cat-icon" src="./survival/img/cat-canteen.png" alt="">食堂餐饮</label>
+          <label><input type="radio" name="survival-category" value="奶茶零食"><img class="survival-cat-icon" src="./survival/img/cat-milktea.png" alt="">奶茶零食</label>
+          <label><input type="radio" name="survival-category" value="超市日用"><img class="survival-cat-icon" src="./survival/img/cat-market.png" alt="">超市日用</label>
+          <label><input type="radio" name="survival-category" value="出行"><img class="survival-cat-icon" src="./survival/img/cat-travel.png" alt="">出行</label>
+          <label><input type="radio" name="survival-category" value="学习打印"><img class="survival-cat-icon" src="./survival/img/cat-print.png" alt="">学习打印</label>
+          <label><input type="radio" name="survival-category" value="娱乐社交"><img class="survival-cat-icon" src="./survival/img/cat-fun.png" alt="">娱乐社交</label>
         </fieldset>
         <label class="survival-field">备注
           <input id="survival-note" type="text">

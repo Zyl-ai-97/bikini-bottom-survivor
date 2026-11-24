@@ -379,3 +379,5 @@
   .survival-crit.is-flash::before,
   .survival-crit__line { animation-duration: 0.01ms; }
 }
+
+.survival-cat-icon { width: 30px; height: 30px; border-radius: 7px; object-fit: cover; vertical-align: middle; margin: 0 4px; }
