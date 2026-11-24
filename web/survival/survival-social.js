@@ -138,8 +138,12 @@
   function portrait(npc, expr) {
     const def = NPCS[npc];
     const img = $('survival-npc-img');
+    img.style.display = '';
     if (!def || !def.img) { img.src = './survival/img/anim/rob-1.png'; return; }
-    img.onerror = () => { img.onerror = null; img.src = `./survival/img/npc/${def.img}-normal.png`; };
+    img.onerror = () => {
+      img.onerror = () => { img.style.display = 'none'; };
+      img.src = `./survival/img/npc/${def.img}-normal.png`;
+    };
     img.src = `./survival/img/npc/${def.img}-${expr}.png`;
   }
   function refreshHud() { if (window.SurvivalHUD) window.SurvivalHUD.refresh(); }

@@ -339,3 +339,52 @@ body.survival-locked .survival-joystick { display: none; }
   transition: opacity 0.35s ease; z-index: 300; pointer-events: none;
 }
 .survival-fade.is-on { opacity: 1; }
+
+/* v4：快捷记账 / 破产条 / 开场 */
+.survival-quick {
+  position: fixed; right: 14px; bottom: 96px; z-index: 110;
+  display: flex; gap: 6px; max-width: 94vw; overflow-x: auto; padding: 2px;
+}
+.survival-quick button {
+  background: rgba(13, 43, 56, .88); color: #e8f4f8; border: 1px solid rgba(255, 183, 3, .4);
+  border-radius: 999px; padding: 7px 12px; font-size: 12px; white-space: nowrap; cursor: pointer;
+}
+.survival-debt-box {
+  background: rgba(140, 30, 30, .25); border: 1px solid rgba(255, 90, 90, .6);
+  color: #ffd7d7; border-radius: 10px; padding: 8px 12px; font-size: 13px; margin-bottom: 10px;
+}
+.survival-intro-panel { text-align: center; }
+.survival-intro-img { width: 100%; max-height: 300px; object-fit: cover; border-radius: 12px; }
+.survival-intro-text { font-size: 15px; line-height: 1.7; margin: 10px 0 0; }
+
+/* v4：账本 / 地图 / 图鉴 */
+.survival-ledger-date { margin: 12px 0 4px; color: #ffb703; font-size: 13px; }
+.survival-ledger-row { display: flex; justify-content: space-between; padding: 4px 2px; font-size: 13px; border-bottom: 1px dashed rgba(255,255,255,.08); }
+.survival-ledger-row .is-in { color: #8fd0a8; }
+.survival-ledger-row .is-out { color: #ffb3b3; }
+.survival-map-box { position: relative; border-radius: 12px; overflow: hidden; }
+.survival-map-box img { width: 100%; display: block; }
+.survival-map-dot {
+  position: absolute; transform: translate(-50%, -50%);
+  background: rgba(13, 43, 56, .85); color: #e8f4f8; border: 1px solid rgba(255,255,255,.4);
+  font-size: 10px; padding: 2px 6px; border-radius: 999px; white-space: nowrap;
+}
+.survival-map-dot.is-target { background: #ffb703; color: #14313d; font-weight: 700; border-color: #fff; }
+.survival-map-hint { font-size: 12px; color: #8fb8c8; }
+.survival-atlas-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.survival-atlas-card { background: rgba(255,255,255,.05); border-radius: 10px; padding: 10px; opacity: .55; }
+.survival-atlas-card.is-on { opacity: 1; border: 1px solid rgba(255,183,3,.4); }
+.survival-atlas-card b { color: #ffb703; font-size: 13px; }
+.survival-atlas-card p { font-size: 12px; line-height: 1.5; margin: 4px 0 0; }
+.survival-phone__tabs { flex-wrap: wrap; }
+
+/* v4：抓水母小游戏 */
+.survival-jelly-field { position: relative; height: 300px; background: rgba(23, 70, 90, .5); border-radius: 12px; overflow: hidden; }
+.survival-jelly-item {
+  position: absolute; width: 44px; height: 40px; border: none; cursor: pointer;
+  border-radius: 50% 50% 42% 42%;
+  background: radial-gradient(circle at 50% 30%, #ffd7ec, #ff8fc7 70%);
+  box-shadow: 0 6px 0 -2px rgba(255, 143, 199, .5), 12px 10px 0 -4px rgba(255, 143, 199, .4), -12px 10px 0 -4px rgba(255, 143, 199, .4);
+  animation: survival-jelly-float 1.2s ease-in-out infinite alternate;
+}
+@keyframes survival-jelly-float { from { transform: translateY(-4px); } to { transform: translateY(6px); } }

@@ -69,6 +69,57 @@
     }
     return null;
   }
+  // —— 每日海况（DESIGN-v4 第 15 项）：与父页同一算法，按父页偏移后的日期取种子 ——
+  function seaToday() {
+    let d;
+    try { d = new window.parent.Date(); } catch { d = new Date(); }
+    const s = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+    let h = 0;
+    for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+    return ['sunny', 'current', 'jelly'][h % 3];
+  }
+
+  // —— 路上拾取（DESIGN-v4 第 16 项）：随机刷点，罗盘指引，靠近收集 ——
+  let pickup = null;
+  let lastPickupSpawn = 0;
+  function updatePickup() {
+    const cam = controls.camera;
+    const now = Date.now();
+    if (pickup) {
+      if (Math.hypot(pickup.x - cam.x, pickup.z - cam.z) < 6) {
+        postToParent({ type: 'bikini-pickup', kind: pickup.kind });
+        showBanner(pickup.kind === 'shell' ? '捡到一枚漂亮贝壳！' : '抓住一只小水母！');
+        pickup = null;
+        lastPickupSpawn = now;
+      }
+      return;
+    }
+    const interval = seaToday() === 'jelly' ? 22000 : 45000;
+    if (now - lastPickupSpawn < interval) return;
+    if (Math.random() > 0.3) return;
+    const anchor = ANCHORS[Math.floor(Math.random() * ANCHORS.length)];
+    pickup = {
+      x: anchor.x + (Math.random() * 24 - 12),
+      z: anchor.z + (Math.random() * 24 - 12),
+      kind: Math.random() < 0.5 ? 'shell' : 'jelly',
+      r: 6,
+    };
+    lastPickupSpawn = now;
+    showBanner('罗盘有反应——附近有可拾取的东西');
+  }
+
+  // —— 抓水母小游戏触发（DESIGN-v4 第 17 项）：在水母田停留时概率触发 ——
+  let lastJellyGameAt = 0;
+  function maybeJellyGame() {
+    if (currentAnchor < 0) return;
+    if (!ANCHORS[currentAnchor].ids.includes('jellyfield')) return;
+    const now = Date.now();
+    if (now - lastJellyGameAt < 300000) return;
+    if (Math.random() > 0.05) return;
+    lastJellyGameAt = now;
+    postToParent({ type: 'bikini-jellygame' });
+  }
+
   let lastPasserbyAt = 0;
   function maybePasserby() {
     if (currentAnchor < 0) return;
@@ -121,6 +172,20 @@
 
   function renderCompass() {
     if (!controls) return;
+    if (pickup) {
+      const cam0 = controls.camera;
+      const dx0 = pickup.x - cam0.x;
+      const dz0 = pickup.z - cam0.z;
+      const dist0 = Math.hypot(dx0, dz0);
+      compass.hidden = false;
+      compass.querySelector('#survival-compass-text').textContent =
+        dist0 <= 6 ? '就在附近，低头看看' : `${pickup.kind === 'shell' ? '贝壳' : '小水母'} · ${Math.round(dist0)}m`;
+      const f0 = dx0 * Math.sin(cam0.yaw) + dz0 * -Math.cos(cam0.yaw);
+      const r0 = dx0 * Math.cos(cam0.yaw) + dz0 * Math.sin(cam0.yaw);
+      compass.querySelector('#survival-compass-arrow').style.transform =
+        `rotate(${(Math.atan2(r0, f0) * 180 / Math.PI).toFixed(0)}deg)`;
+      return;
+    }
     const target = currentTarget();
     if (!target) { compass.hidden = true; return; }
     const anchor = ANCHORS.find(a => a.ids.includes(target.loc));
@@ -211,6 +276,7 @@
     } catch { /* 忽略 */ }
   }
 
+  let tickCount = 0;
   let currentAnchor = -1;
   function tick() {
     if (!controls) return;
@@ -244,14 +310,19 @@
       }
     }
     maybePasserby();
+    tickCount += 1;
     if (currentAnchor >= 0) {
+      const roughSea = seaToday() === 'current';
       for (const id of ANCHORS[currentAnchor].ids) {
         if (!STAY_IDS.includes(id)) continue;
+        if (roughSea && tickCount % 2 === 1) continue;
         staySeconds[id] = (staySeconds[id] || 0) + 1;
         try { q.recordStay(id, 1); } catch { /* 忽略 */ }
         if (staySeconds[id] === 3 || staySeconds[id] === 20) snapshotSides();
       }
     }
+    updatePickup();
+    maybeJellyGame();
     tickPatrol();
   }
 

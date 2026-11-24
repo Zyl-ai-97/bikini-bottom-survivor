@@ -110,6 +110,7 @@
         </div>
         <div class="survival-stat"><span class="survival-hud__label">护盾</span><b id="survival-shield">0</b></div>
         <div class="survival-stat"><span class="survival-hud__label">立足进度</span><b id="survival-day-badge">第 1/30 天</b></div>
+        <button id="survival-sound-btn" class="survival-mini-btn" type="button">声音</button>
         <button id="survival-tour-btn" class="survival-mini-btn" type="button" aria-pressed="false">观光</button>
         <button id="survival-task-btn" class="survival-mini-btn" type="button">任务</button>
         <button id="survival-report-btn" class="survival-mini-btn" type="button">战报</button>
@@ -126,6 +127,13 @@
       </div>
     </div>
 
+    <div id="survival-quick" class="survival-quick" aria-label="快捷记账">
+      <button type="button" data-quick="食堂餐饮|25|蟹堡套餐">蟹堡套餐 ¥25</button>
+      <button type="button" data-quick="奶茶零食|15|冰淇淋">冰淇淋 ¥15</button>
+      <button type="button" data-quick="出行|4|公交">公交 ¥4</button>
+      <button type="button" data-quick="学习打印|10|打印">打印 ¥10</button>
+      <button type="button" data-quick="超市日用|60|日用采购">日用 ¥60</button>
+    </div>
     <button id="survival-add-btn" type="button">记一笔</button>
     <div id="survival-crit" class="survival-crit" aria-live="polite"></div>
     <div id="survival-toast" class="survival-toast" hidden></div>
@@ -189,10 +197,33 @@
           <dt>通缉</dt><dd id="survival-sum-wanted"></dd>
           <dt>声望</dt><dd id="survival-sum-rep"></dd>
           <dt>今日事件</dt><dd id="survival-sum-event"></dd>
+          <dt>今日海况</dt><dd id="survival-sum-sea"></dd>
           <dt>今日支线</dt><dd id="survival-sum-side"></dd>
         </dl>
         <div class="survival-actions">
           <button id="survival-summary-close" type="button" class="survival-primary">开始新的一天</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="survival-intro" class="survival-overlay" hidden>
+      <div class="survival-panel survival-intro-panel">
+        <img src="./survival/img/poster-main.png" class="survival-intro-img" alt="">
+        <p class="survival-intro-text">你带着 ¥1500 生活费，来到比奇堡。</p>
+        <p class="survival-intro-text">在这里立足 30 天：记账活下去，接活攒声望，别让通缉星爬满。</p>
+        <p class="survival-intro-text">钱、声望、通缉——月底的立足评级，由你自己挣。</p>
+        <div class="survival-actions">
+          <button id="survival-intro-start" type="button" class="survival-primary">开始立足</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="survival-jelly" class="survival-overlay" hidden>
+      <div class="survival-panel">
+        <h2 class="survival-panel__title">抓水母！剩余 <span id="survival-jelly-time">20</span> 秒 · 已抓 <span id="survival-jelly-count">0</span></h2>
+        <div id="survival-jelly-field" class="survival-jelly-field"></div>
+        <div class="survival-actions">
+          <button id="survival-jelly-quit" type="button">放弃</button>
         </div>
       </div>
     </div>
@@ -209,9 +240,13 @@
             <button id="survival-tab-quest" type="button" role="tab" aria-selected="true">任务</button>
             <button id="survival-tab-report" type="button" role="tab" aria-selected="false">战报</button>
             <button id="survival-tab-achievement" type="button" role="tab" aria-selected="false">成就</button>
+            <button id="survival-tab-ledger" type="button" role="tab" aria-selected="false">账本</button>
+            <button id="survival-tab-map" type="button" role="tab" aria-selected="false">地图</button>
+            <button id="survival-tab-atlas" type="button" role="tab" aria-selected="false">图鉴</button>
           </nav>
           <div class="survival-phone__pages">
             <section id="survival-task-panel" class="survival-phone__page" role="tabpanel">
+              <div id="survival-debt-box" class="survival-debt-box" hidden></div>
               <h3 class="survival-panel__title">今日事件</h3>
               <div id="survival-event-box" class="survival-event-box"></div>
               <h3 class="survival-panel__title">当前主线</h3>
@@ -237,7 +272,11 @@
               </dl>
               <div class="survival-actions survival-actions--report">
                 <button id="survival-sleep" type="button">回家睡觉（推进一天）</button>
+                <button id="survival-demo-mode" type="button">演示存档（第12天）</button>
                 <button id="survival-report-demo" type="button">一键填充演示数据</button>
+                <button id="survival-share-card" type="button">生成战报分享图</button>
+                <button id="survival-export" type="button">导出存档码</button>
+                <button id="survival-import" type="button">导入存档码</button>
                 <button id="survival-report-reset" type="button">重置存档</button>
                 <button id="survival-report-close" type="button" class="survival-primary">关闭</button>
               </div>
@@ -245,6 +284,21 @@
             <section id="survival-phone-achievement" class="survival-phone__page" role="tabpanel" hidden>
               <h3 class="survival-panel__title">成就（24）</h3>
               <div id="survival-achievement-grid" class="survival-achievement-grid"></div>
+            </section>
+            <section id="survival-phone-ledger" class="survival-phone__page" role="tabpanel" hidden>
+              <h3 class="survival-panel__title">账本</h3>
+              <div id="survival-ledger-list" class="survival-ledger-list"></div>
+            </section>
+            <section id="survival-phone-map" class="survival-phone__page" role="tabpanel" hidden>
+              <h3 class="survival-panel__title">比奇堡地图</h3>
+              <div id="survival-map-box" class="survival-map-box">
+                <img src="../docs/images/town-aerial.webp" alt="比奇堡俯瞰图">
+              </div>
+              <p class="survival-map-hint">金色标记是当前任务目标，跟着水下罗盘走。</p>
+            </section>
+            <section id="survival-phone-atlas" class="survival-phone__page" role="tabpanel" hidden>
+              <h3 class="survival-panel__title">地点图鉴</h3>
+              <div id="survival-atlas-grid" class="survival-atlas-grid"></div>
             </section>
           </div>
           <div class="survival-phone__home"></div>
@@ -254,16 +308,22 @@
   `;
   document.body.appendChild(host);
 
-  const overlays = [$('survival-modal'), $('survival-setup'), $('survival-phone-overlay'), $('survival-summary')];
+  const overlays = [$('survival-modal'), $('survival-setup'), $('survival-phone-overlay'), $('survival-summary'), $('survival-intro'), $('survival-jelly')];
   const tabs = {
     quest: $('survival-tab-quest'),
     report: $('survival-tab-report'),
     achievement: $('survival-tab-achievement'),
+    ledger: $('survival-tab-ledger'),
+    map: $('survival-tab-map'),
+    atlas: $('survival-tab-atlas'),
   };
   const pages = {
     quest: $('survival-task-panel'),
     report: $('survival-report'),
     achievement: $('survival-phone-achievement'),
+    ledger: $('survival-phone-ledger'),
+    map: $('survival-phone-map'),
+    atlas: $('survival-phone-atlas'),
   };
   let setupPending = false;
   let pendingReturn = null;
@@ -307,6 +367,112 @@
     if (name === 'report') renderReport();
     if (name === 'achievement') renderAchievements();
     if (name === 'quest') renderQuests();
+    if (name === 'ledger') renderLedger();
+    if (name === 'map') renderMap();
+    if (name === 'atlas') renderAtlas();
+  }
+
+  // —— 账本（DESIGN-v4 第 9 项）：按日倒序的收支明细 ——
+  function renderLedger() {
+    const box = $('survival-ledger-list');
+    box.textContent = '';
+    let raw = null;
+    try { raw = JSON.parse(localStorage.getItem('budget-survivor-state-v1') || 'null'); } catch { /* 忽略 */ }
+    const expenses = (raw && raw.expenses) || [];
+    const incomes = (raw && raw.incomes) || [];
+    const rows = [
+      ...expenses.map(e => ({ date: e.date, label: `${e.category}${e.note ? ' · ' + e.note : ''}`, amount: -Number(e.amount) || 0 })),
+      ...incomes.map(i => ({ date: i.date, label: i.note || i.source || '任务收入', amount: Number(i.amount) || 0 })),
+    ].sort((a, b) => String(b.date).localeCompare(String(a.date)));
+    if (!rows.length) {
+      box.textContent = '还没有记录，去记第一笔吧。';
+      return;
+    }
+    let currentDate = '';
+    for (const row of rows.slice(0, 80)) {
+      if (row.date !== currentDate) {
+        currentDate = row.date;
+        const head = document.createElement('h4');
+        head.className = 'survival-ledger-date';
+        head.textContent = currentDate;
+        box.appendChild(head);
+      }
+      const line = document.createElement('div');
+      line.className = 'survival-ledger-row';
+      const label = document.createElement('span');
+      label.textContent = row.label;
+      const amount = document.createElement('b');
+      amount.textContent = (row.amount >= 0 ? '+' : '−') + '¥' + Math.abs(row.amount);
+      amount.className = row.amount >= 0 ? 'is-in' : 'is-out';
+      line.append(label, amount);
+      box.appendChild(line);
+    }
+  }
+
+  // —— 地图（DESIGN-v4 第 13 项）：俯瞰底图 + 锚点标记 + 目标高亮 ——
+  const MAP_POINTS = {
+    diner: [-45.3, -25.6, '蟹堡王'], chum: [-44.6, -30.2, '海之霸'], neighbors: [30.7, -18.6, '邻居区'],
+    street: [1.9, -32.8, '镇中心·学校'], ridge: [22.6, -62, '山脊'], cove: [43.3, -15.7, '海湾'],
+    horn: [45.2, -25.55, '号角礁'], conch: [25.1, -12.2, '海螺街'], market: [-36, -30, '贝壳超市'],
+    jellyfield: [33, -29.1, '水母田'],
+  };
+  function renderMap() {
+    const box = $('survival-map-box');
+    box.querySelectorAll('.survival-map-dot').forEach(d => d.remove());
+    let targetLoc = null;
+    const sides = call(quests, 'getSide') ?? [];
+    const active = sides.find(s => s.status === 'active');
+    if (active) targetLoc = sideTargetLoc(active);
+    if (!targetLoc) {
+      const main = call(quests, 'getMain');
+      if (main && main.current && main.current.type === 'spend') targetLoc = MAIN_PLACE[main.current.category];
+    }
+    for (const [loc, [x, z, name]] of Object.entries(MAP_POINTS)) {
+      const dot = document.createElement('span');
+      dot.className = 'survival-map-dot' + (loc === targetLoc ? ' is-target' : '');
+      dot.style.left = `${((x + 60) / 120) * 100}%`;
+      dot.style.top = `${(1 - (z + 70) / 105) * 100}%`;
+      dot.title = name;
+      dot.textContent = name;
+      box.appendChild(dot);
+    }
+  }
+  function sideTargetLoc(item) {
+    if (item.type === 'visit' && Array.isArray(item.locations)) return item.locations[Math.min((item.progress || {}).step || 0, item.locations.length - 1)];
+    if (item.type === 'stay' || item.type === 'purchaseVisit') return item.destination;
+    if (item.type === 'choice') return item.locId;
+    return null;
+  }
+
+  // —— 图鉴（DESIGN-v4 第 14 项）：到访解锁 ——
+  const ATLAS = {
+    diner: '蟹堡王——全镇最香的地方，蟹老板的算盘比收银机还快。',
+    chum: '海之霸——痞老板的店，半价的东西，吃之前先想想为什么半价。',
+    neighbors: '邻居区——菠萝屋、石头屋和复活节石像，热闹的源头。',
+    street: '镇中心——学校和大家的生活交汇的地方。',
+    school: '航船学校——泡芙老师的课堂，靠岸先深呼吸。',
+    market: '贝壳超市——日用百货一应俱全，特价日要趁早。',
+    jellyfield: '水母田——粉色水母成群，抓水母爱好者的天堂。',
+    cove: '海湾——珊迪采样的地方，水质清澈见底。',
+    ridge: '山脊——视野最好的地方，能望见大半个比奇堡。',
+    horn: '号角礁——形状像号角的礁石群。',
+    conch: '海螺街——镇上最安静的街道，适合散步。',
+  };
+  function renderAtlas() {
+    const grid = $('survival-atlas-grid');
+    grid.textContent = '';
+    const visited = window.BSSocial ? window.BSSocial.getVisited() : {};
+    for (const [loc, intro] of Object.entries(ATLAS)) {
+      const card = document.createElement('div');
+      const on = Boolean(visited[loc]);
+      card.className = 'survival-atlas-card' + (on ? ' is-on' : '');
+      const title = document.createElement('b');
+      title.textContent = on ? (LOC_NAMES[loc] || loc) : '？？？';
+      const desc = document.createElement('p');
+      desc.textContent = on ? intro : '还没去过，游过去看看。';
+      card.append(title, desc);
+      grid.appendChild(card);
+    }
   }
 
   function openPhone(name) {
@@ -370,6 +536,16 @@
     text($('survival-shield'), shield);
   }
 
+  // —— 每日海况（DESIGN-v4 第 15 项）：与水下桥同一算法 ——
+  const SEA_NAMES = { sunny: '晴（一切正常）', current: '暗流（停留任务耗时翻倍）', jelly: '水母潮（拾取刷新翻倍）' };
+  function seaToday() {
+    const d = new Date();
+    const s = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+    let h = 0;
+    for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+    return ['sunny', 'current', 'jelly'][h % 3];
+  }
+
   // —— 日期推进（DESIGN-v4 第 2、3 项）：起始日记录在 bs-start-date，偏移在 bs-day-offset ——
   const dayKeyOf = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
   function dayIndex() {
@@ -402,6 +578,7 @@
     const event = call(quests, 'getDailyEvent');
     const v3event = event ? (v3Content.events || {})[event.id] || {} : {};
     text($('survival-sum-event'), event ? (v3event.title || event.title) : '—');
+    text($('survival-sum-sea'), SEA_NAMES[seaToday()]);
     const sides = call(quests, 'getSide') ?? [];
     text($('survival-sum-side'), sides.length ? sides.map(s => (questLines.sideQuests || {})[s.id]?.title || s.title).join('、') : '—');
     open($('survival-summary'));
@@ -409,16 +586,22 @@
 
   function sleepToNextDay() {
     const fade = $('survival-fade');
-    fade.hidden = false;
-    requestAnimationFrame(() => fade.classList.add('is-on'));
-    setTimeout(() => {
+    const advance = () => {
       try {
         const off = (parseInt(localStorage.getItem('bs-day-offset') || '0', 10) || 0) + 1;
         localStorage.setItem('bs-day-offset', String(off));
         localStorage.setItem('bs-just-slept', '1');
       } catch { /* 存储不可用时仍重载 */ }
       try { location.reload(); } catch { fade.classList.remove('is-on'); fade.hidden = true; }
-    }, 420);
+    };
+    if (window.BSCutscene) {
+      window.BSCutscene.play('sleep');
+      setTimeout(advance, 1500);
+      return;
+    }
+    fade.hidden = false;
+    requestAnimationFrame(() => fade.classList.add('is-on'));
+    setTimeout(advance, 420);
   }
 
   function refresh() {
@@ -437,7 +620,37 @@
     renderReputation();
     renderShield();
     renderDayBadge();
+    renderDebt();
     updateClosedHint();
+  }
+
+  // —— 破产紧急支线（DESIGN-v4 第 12 项）：余额 <0 后，完成任意 2 条支线解除 ——
+  function renderDebt() {
+    const box = $('survival-debt-box');
+    if (!box) return;
+    const derived = typeof quests.getDerived === 'function' ? call(quests, 'getDerived') : null;
+    const extra = call(quests, 'getReportExtra') ?? {};
+    const sideDone = extra.sideDoneTotal || 0;
+    let debt = null;
+    try { debt = JSON.parse(localStorage.getItem('bs-debt') || 'null'); } catch { /* 忽略 */ }
+    if (derived && derived.balance < 0) {
+      if (!debt) {
+        debt = { since: sideDone };
+        try { localStorage.setItem('bs-debt', JSON.stringify(debt)); } catch { /* 忽略 */ }
+      }
+      const done = sideDone - debt.since;
+      if (done >= 2) {
+        try { localStorage.removeItem('bs-debt'); } catch { /* 忽略 */ }
+        box.hidden = true;
+        toast('打工还债完成，债务状态解除！');
+      } else {
+        box.hidden = false;
+        box.textContent = `破产了（余额 ${money(derived.balance)}）：打工还债中，完成任意支线 ${done}/2 后解除，期间别再大额消费。`;
+      }
+    } else {
+      if (debt) { try { localStorage.removeItem('bs-debt'); } catch { /* 忽略 */ } }
+      box.hidden = true;
+    }
   }
 
   function showFeedback(feedback, amount) {
@@ -655,6 +868,8 @@
       } else if (action === 'claim') {
         const result = quests.claimQuest(id);
         showDialog(lines.npc, splitLines(lines.done));
+        sfx('quest');
+        if (window.BSCutscene) window.BSCutscene.play('prize');
         const income = result && result.reward ? result.reward.income : 0;
         const shield = result && result.reward ? result.reward.shield : 0;
         if (income > 0) toast(`任务交付：+${money(income)}`);
@@ -742,6 +957,9 @@
     api.save(state);
     setupPending = false;
     close($('survival-setup'));
+    let introSeen = false;
+    try { introSeen = localStorage.getItem('bs-intro-seen') === '1'; } catch { /* 忽略 */ }
+    if (!introSeen) open($('survival-intro'));
     refresh();
   }
   function afterIntro(callback) {
@@ -762,21 +980,70 @@
     const timer = setTimeout(finish, 6000);
   }
 
-  $('survival-form').addEventListener('submit', event => {
-    event.preventDefault();
-    const amount = Number($('survival-amount').value);
-    if (!Number.isFinite(amount) || amount <= 0) { $('survival-amount').focus({ preventScroll: true }); return; }
-    const checked = document.querySelector('input[name="survival-category"]:checked');
-    const category = checked ? checked.value : '食堂餐饮';
+  // —— 声音：BGM（片尾曲循环）+ WebAudio 合成轻音效，共用一个开关 ——
+  let soundOn = true;
+  try { soundOn = localStorage.getItem('bs-sound') !== 'off'; } catch { /* 忽略 */ }
+  const bgm = new Audio('./survival/audio/bgm.mp3');
+  bgm.loop = true;
+  bgm.volume = 0.32;
+  let bgmStarted = false;
+  function syncSoundBtn() { $('survival-sound-btn').textContent = soundOn ? '声音：开' : '声音：关'; }
+  function startBgm() {
+    if (bgmStarted || !soundOn) return;
+    bgmStarted = true;
+    bgm.play().catch(() => { bgmStarted = false; });
+  }
+  window.addEventListener('pointerdown', startBgm, { once: false });
+  let audioCtx = null;
+  function tone(freq, delay, dur, type = 'sine', vol = 0.045) {
+    if (!soundOn) return;
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      const t = audioCtx.currentTime + delay;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, t);
+      gain.gain.setValueAtTime(vol, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+      osc.connect(gain).connect(audioCtx.destination);
+      osc.start(t);
+      osc.stop(t + dur);
+    } catch { /* 音效失败不影响玩法 */ }
+  }
+  function sfx(name) {
+    if (name === 'coin') { tone(880, 0, 0.12); tone(1318, 0.09, 0.18); }
+    else if (name === 'crit') { tone(220, 0, 0.25, 'sawtooth', 0.05); tone(110, 0.05, 0.3, 'sawtooth', 0.04); }
+    else if (name === 'quest') { tone(659, 0, 0.12); tone(880, 0.1, 0.12); tone(990, 0.2, 0.2); }
+  }
+  $('survival-sound-btn').addEventListener('click', () => {
+    soundOn = !soundOn;
+    try { localStorage.setItem('bs-sound', soundOn ? 'on' : 'off'); } catch { /* 忽略 */ }
+    if (soundOn) startBgm();
+    else bgm.pause();
+    syncSoundBtn();
+  });
+  syncSoundBtn();
+
+  const CUTSCENE_BY_CATEGORY = { '食堂餐饮': 'eat', '奶茶零食': 'ice', '超市日用': 'shop' };
+  const MAIN_PLACE = { '食堂餐饮': 'diner', '超市日用': 'market', '学习打印': 'school', '娱乐社交': 'chum' };
+
+  // 统一记账入口：表单与快捷按钮共用。到店记账（主线）在这一层拦截。
+  function recordExpense({ amount, category, note }) {
+    const main = call(quests, 'getMain');
+    if (main && main.current && main.current.type === 'spend'
+      && main.current.category === category && amount >= main.current.amount) {
+      const needLoc = MAIN_PLACE[category];
+      const near = window.__bsNearPlace;
+      if (needLoc && !(near && near.loc === needLoc && Date.now() - near.at < 90000)) {
+        toast(`主线要到店消费：先游到${LOC_NAMES[needLoc]}附近，再记这笔`);
+        return null;
+      }
+    }
     const place = CATEGORY_PLACE[category];
     const wasClosed = place && typeof quests.isOpen === 'function' ? call(quests, 'isOpen', place) === false : false;
     const addExpense = typeof quests.addExpense === 'function' ? quests.addExpense : api.addExpense;
-    const result = addExpense({
-      amount,
-      category,
-      note: $('survival-note').value,
-    });
-    // 集成层职责：海之霸消费打标 + 涨星；打烊时段消费涨星。
+    const result = addExpense({ amount, category, note });
     if (place === 'chum' && typeof quests.markChumSpent === 'function') {
       call(quests, 'markChumSpent');
       call(quests, 'addWanted', 'chum');
@@ -787,9 +1054,35 @@
     refresh();
     renderQuests();
     showFeedback(result.feedback, amount);
+    const anim = result.feedback && result.feedback.anim;
+    const crit = result.feedback && result.feedback.crit;
+    if (anim === 'income' || anim === 'coin') sfx('coin');
+    else if (crit === 'heavy' || crit === 'lethal' || anim === 'crit' || anim === 'sugar') sfx('crit');
+    const scene = CUTSCENE_BY_CATEGORY[category];
+    if (scene && window.BSCutscene) window.BSCutscene.play(scene);
+    return result;
+  }
+
+  $('survival-form').addEventListener('submit', event => {
+    event.preventDefault();
+    const amount = Number($('survival-amount').value);
+    if (!Number.isFinite(amount) || amount <= 0) { $('survival-amount').focus({ preventScroll: true }); return; }
+    const checked = document.querySelector('input[name="survival-category"]:checked');
+    const result = recordExpense({
+      amount,
+      category: checked ? checked.value : '食堂餐饮',
+      note: $('survival-note').value,
+    });
+    if (!result) return;
     $('survival-form').reset();
     updateClosedHint();
     close($('survival-modal'));
+  });
+  $('survival-quick').addEventListener('click', event => {
+    const button = event.target.closest ? event.target.closest('[data-quick]') : null;
+    if (!button) return;
+    const [category, amount, note] = button.dataset.quick.split('|');
+    recordExpense({ amount: Number(amount), category, note });
   });
   host.querySelectorAll('[data-close]').forEach(button => {
     button.addEventListener('click', () => close($(button.dataset.close)));
@@ -812,6 +1105,89 @@
   $('survival-start').addEventListener('click', finishSetup);
   $('survival-sleep').addEventListener('click', sleepToNextDay);
   $('survival-summary-close').addEventListener('click', () => close($('survival-summary')));
+  $('survival-demo-mode').addEventListener('click', () => {
+    api.reset();
+    const demo = api.generateDemoData();
+    if (typeof quests.seedDemo === 'function') call(quests, 'seedDemo', demo);
+    try {
+      const d = new Date();
+      d.setDate(d.getDate() - 11);
+      localStorage.setItem('bs-start-date', dayKeyOf(d));
+    } catch { /* 忽略 */ }
+    refresh();
+    renderQuests();
+    renderReport();
+    toast('已载入第 12 天演示存档');
+  });
+  // —— 存档导出/导入码（DESIGN-v4 第 20 项）——
+  $('survival-export').addEventListener('click', () => {
+    try {
+      const payload = {
+        main: localStorage.getItem('budget-survivor-state-v1'),
+        social: localStorage.getItem('budget-survivor-social-v1'),
+        offset: localStorage.getItem('bs-day-offset'),
+        start: localStorage.getItem('bs-start-date'),
+      };
+      const code = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+      window.prompt('复制你的存档码（换设备时用「导入存档码」粘贴）：', code);
+    } catch { toast('导出失败'); }
+  });
+  $('survival-import').addEventListener('click', () => {
+    const code = window.prompt('粘贴存档码：');
+    if (!code) return;
+    try {
+      const payload = JSON.parse(decodeURIComponent(escape(atob(code.trim()))));
+      if (payload.main) localStorage.setItem('budget-survivor-state-v1', payload.main);
+      if (payload.social) localStorage.setItem('budget-survivor-social-v1', payload.social);
+      if (payload.offset) localStorage.setItem('bs-day-offset', payload.offset);
+      if (payload.start) localStorage.setItem('bs-start-date', payload.start);
+      location.reload();
+    } catch { toast('存档码无效，导入失败'); }
+  });
+
+  // —— 战报分享卡（DESIGN-v4 第 19 项）：canvas 合成海报 + 评级 ——
+  $('survival-share-card').addEventListener('click', () => {
+    const extra = call(quests, 'getReportExtra') ?? {};
+    const derived = typeof quests.getDerived === 'function' ? call(quests, 'getDerived') : {};
+    const canvas = document.createElement('canvas');
+    canvas.width = 640;
+    canvas.height = 840;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#0d2b38';
+    ctx.fillRect(0, 0, 640, 840);
+    const poster = new Image();
+    poster.onload = () => {
+      ctx.drawImage(poster, 0, 0, 640, 470);
+      drawCardText();
+    };
+    poster.onerror = drawCardText;
+    poster.src = './survival/img/poster-main.png';
+    function drawCardText() {
+      ctx.fillStyle = '#ffb703';
+      ctx.font = '700 92px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`立足评级 ${extra.grade || 'D'}`, 320, 590);
+      ctx.fillStyle = '#e8f4f8';
+      ctx.font = '28px sans-serif';
+      ctx.fillText(`第 ${dayIndex()} 天 · 声望 ${extra.score != null ? Math.round(extra.score) : 0} 分`, 320, 650);
+      ctx.fillText(`主线 ${extra.mainDone || 0}/12 · 支线累计 ${extra.sideDoneTotal || 0} · 通缉 ${extra.wantedStars || 0} 星`, 320, 700);
+      ctx.fillText(`余额 ${money((derived && derived.balance) || 0)}`, 320, 750);
+      ctx.font = '20px sans-serif';
+      ctx.fillStyle = '#8fb8c8';
+      ctx.fillText('1500 生存季 × 比奇堡', 320, 805);
+      const link = document.createElement('a');
+      link.download = 'survival-report-card.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      toast('分享图已生成');
+    }
+  });
+
+  $('survival-intro-start').addEventListener('click', () => {
+    try { localStorage.setItem('bs-intro-seen', '1'); } catch { /* 忽略 */ }
+    close($('survival-intro'));
+    if (window.BSCutscene) window.BSCutscene.play('phone');
+  });
   $('survival-report-demo').addEventListener('click', () => {
     const demo = api.generateDemoData();
     if (typeof quests.seedDemo === 'function') quests.seedDemo(demo);
@@ -945,6 +1321,87 @@
       };
     },
   };
+
+  // —— 拾取与抓水母（DESIGN-v4 第 16、17 项）：桥触发，父页结算 ——
+  let jellyTimer = null;
+  let jellySpawn = null;
+  function endJellyGame(finished) {
+    if (jellyTimer) clearInterval(jellyTimer);
+    if (jellySpawn) clearInterval(jellySpawn);
+    jellyTimer = jellySpawn = null;
+    close($('survival-jelly'));
+    if (!finished) return;
+    const count = Number($('survival-jelly-count').textContent) || 0;
+    try { localStorage.setItem('bs-jelly-day', dayKeyOf(new Date())); } catch { /* 忽略 */ }
+    if (count >= 8) { call(quests, 'addReputation', 3, 'jelly-game'); toast(`抓到 ${count} 只水母！声望 +3`); }
+    else if (count >= 4) { call(quests, 'addReputation', 1, 'jelly-game'); toast(`抓到 ${count} 只水母，声望 +1`); }
+    else toast(`抓到 ${count} 只水母，下次加油`);
+    sfx('quest');
+    refresh();
+  }
+  function startJellyGame() {
+    try {
+      if (localStorage.getItem('bs-jelly-day') === dayKeyOf(new Date())) return;
+    } catch { /* 忽略 */ }
+    if (anyOpen()) return;
+    const field = $('survival-jelly-field');
+    field.textContent = '';
+    $('survival-jelly-count').textContent = '0';
+    $('survival-jelly-time').textContent = '20';
+    open($('survival-jelly'));
+    let remain = 20;
+    jellyTimer = setInterval(() => {
+      remain -= 1;
+      $('survival-jelly-time').textContent = String(Math.max(0, remain));
+      if (remain <= 0) endJellyGame(true);
+    }, 1000);
+    const spawn = () => {
+      if (field.childNodes.length >= 5) return;
+      const jelly = document.createElement('button');
+      jelly.type = 'button';
+      jelly.className = 'survival-jelly-item';
+      jelly.setAttribute('aria-label', '水母');
+      jelly.style.left = `${5 + Math.random() * 85}%`;
+      jelly.style.top = `${5 + Math.random() * 75}%`;
+      jelly.addEventListener('click', () => {
+        $('survival-jelly-count').textContent = String((Number($('survival-jelly-count').textContent) || 0) + 1);
+        tone(1200, 0, 0.08, 'sine', 0.03);
+        jelly.remove();
+      });
+      field.appendChild(jelly);
+      setTimeout(() => jelly.remove(), 2600);
+    };
+    spawn();
+    jellySpawn = setInterval(spawn, 650);
+  }
+  $('survival-jelly-quit').addEventListener('click', () => endJellyGame(false));
+
+  window.addEventListener('message', event => {
+    if (event.origin !== location.origin) return;
+    const frame = $('dive-view');
+    if (!frame || event.source !== frame.contentWindow) return;
+    const data = event.data || {};
+    if (data.type === 'bikini-pickup') {
+      try {
+        const key = 'budget-survivor-social-v1';
+        const social = JSON.parse(localStorage.getItem(key) || '{}');
+        social.pickups = social.pickups || {};
+        const day = dayKeyOf(new Date());
+        social.pickups[day] = (social.pickups[day] || 0) + 1;
+        localStorage.setItem(key, JSON.stringify(social));
+        if (social.pickups[day] <= 5) {
+          call(quests, 'addReputation', 1, 'pickup');
+          toast('拾取成功：声望 +1');
+        } else {
+          toast('拾取成功（今日声望已达上限）');
+        }
+        sfx('coin');
+        refresh();
+      } catch { /* 忽略 */ }
+    } else if (data.type === 'bikini-jellygame') {
+      startJellyGame();
+    }
+  });
 
   refresh();
   afterIntro(() => {
