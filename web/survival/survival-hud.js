@@ -7,7 +7,7 @@
 
   const script = document.currentScript;
   const base = script ? new URL('.', script.src) : new URL('./survival/', location.href);
-  const cssUrl = new URL('survival-hud.css?v=1124e', base).href;
+  const cssUrl = new URL('survival-hud.css?v=1125a', base).href;
   if (!Array.from(document.querySelectorAll('link[rel~="stylesheet"]')).some(link => link.href === cssUrl)) {
     const link = document.createElement('link');
     link.rel = 'stylesheet';
@@ -1203,7 +1203,7 @@
     { img: './survival/img/tutorial/town-street.webp', cap: '点木牌下潜进小镇：摇杆 / WASD 移动，跟着金色箭头找任务。' },
     { img: './survival/img/tutorial/comic-2.png', fb: './survival/img/npc/krabs-normal.png', cap: '花一笔记一笔：余额就是 HP，大额消费会暴击！' },
     { img: './survival/img/tutorial/comic-3.png', fb: './survival/img/npc/patrick-normal.png', cap: '靠近 NPC 点「聊天」，接支线、攒声望、赚外快。' },
-    { img: './survival/img/anim/phone-2.png', cap: '海螺手机里有任务、账本、地图、图鉴和战报。' },
+    { img: './survival/img/tutorial/comic-5.png', fb: './survival/img/anim/phone-2.png', cap: '海螺手机里有任务、账本、地图、图鉴和战报。' },
     { img: './survival/img/anim/sleep-2.png', cap: '回菠萝屋睡觉推进一天。别破产，破产有紧急支线！' },
   ];
   let tutorialIndex = 0;
