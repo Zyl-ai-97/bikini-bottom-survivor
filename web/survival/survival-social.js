@@ -310,7 +310,7 @@
     setNote('');
     const img = $('survival-npc-img');
     img.onerror = null;
-    img.src = './survival/img/anim/passerby.png';
+    img.src = './survival/img/anim/passerby.png?v=1125a';
     setLine('哎，你也是住这片的吧？这片水域最近可不太平。');
     setOptions([
       {
