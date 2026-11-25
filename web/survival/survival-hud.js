@@ -1455,6 +1455,145 @@
     }
   });
 
+
+  // —— v5 任务引导：目标卡 + 给水下桥发导航（光路/感叹号/提示框）+ 任务动画 ——
+  const CLIP_FOR = {
+    'side:krabs-secret': 'clip-d', 'side:patrick-icecream': 'clip-e', 'side:squidward-reed': 'clip-g',
+    'faction:k6': 'clip-b', 'faction:p6': 'clip-c',
+  };
+  const NPC_ANCHOR = { crab: 'diner', diner: 'diner', neighbors: 'neighbors', treehouse: 'cove', school: 'school' };
+  const PLACE_CN = { diner: '蟹堡王', chum: '海之霸', neighbors: '邻居区', street: '镇中心', school: '航船学校', market: '贝壳超市', cove: '海湾', ridge: '山脊', horn: '号角礁', conch: '菠萝屋', jellyfield: '水母田' };
+  const MAIN_GUIDE = { 'first-meal': 'diner', 'snail-food': 'market', 'jelly-net': 'market', 'tuition': 'school', 'roof': 'market' };
+  const objectiveCard = document.createElement('div');
+  objectiveCard.id = 'survival-objective';
+  objectiveCard.hidden = true;
+  objectiveCard.style.cssText = 'position:fixed;top:64px;left:50%;transform:translateX(-50%);z-index:55;'
+    + 'background:rgba(10,35,45,.85);color:#ffe9a8;border:1px solid rgba(255,183,3,.55);border-radius:999px;'
+    + 'padding:6px 16px;font:600 13px/1.5 system-ui,sans-serif;pointer-events:none;max-width:92vw;text-align:center;';
+  document.body.appendChild(objectiveCard);
+  const clipOverlay = document.createElement('div');
+  clipOverlay.hidden = true;
+  clipOverlay.style.cssText = 'position:fixed;inset:0;z-index:200;background:#000;display:flex;align-items:center;justify-content:center;';
+  clipOverlay.innerHTML = '<video id="survival-clip-video" style="width:100%;height:100%;object-fit:contain" playsinline></video>'
+    + '<button type="button" id="survival-clip-skip" style="position:absolute;right:18px;bottom:18px;background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:999px;padding:8px 18px;font:600 14px system-ui">跳过 ▸</button>';
+  document.body.appendChild(clipOverlay);
+  const clipVideo = clipOverlay.querySelector('#survival-clip-video');
+  let clipPlaying = false;
+  function endClip() {
+    if (!clipPlaying) return;
+    clipPlaying = false;
+    try { clipVideo.pause(); } catch { /* 忽略 */ }
+    clipOverlay.hidden = true;
+    clipVideo.removeAttribute('src');
+    try { clipVideo.load(); } catch { /* 忽略 */ }
+  }
+  function playClip(file) {
+    if (clipPlaying) return;
+    clipPlaying = true;
+    clipOverlay.hidden = false;
+    clipVideo.src = `survival/video/${file}.mp4`;
+    try {
+      const p = clipVideo.play();
+      if (p && p.catch) p.catch(() => endClip());
+    } catch { endClip(); }
+  }
+  clipVideo.addEventListener('ended', endClip);
+  clipVideo.addEventListener('error', endClip);
+  clipOverlay.querySelector('#survival-clip-skip').addEventListener('click', endClip);
+  function todayKeyLocal() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  function computeGuide() {
+    try {
+      const sg = window.BSSocial && window.BSSocial.getGuide && window.BSSocial.getGuide();
+      if (sg) return { ...sg, source: 'faction' };
+      const q = window.BudgetQuests;
+      if (!q || !q.getSide) return null;
+      const sides = q.getSide();
+      for (const item of sides) {
+        if (item.status === 'done') {
+          return { source: 'side', kind: 'claim', id: item.id, questName: item.title, loc: NPC_ANCHOR[item.locId] || 'neighbors', label: `回去找${item.npc}交付` };
+        }
+      }
+      for (const item of sides) {
+        if (item.status !== 'active') continue;
+        if (item.type === 'visit') {
+          const loc = item.locations[item.progress.step];
+          if (loc) return { source: 'side', kind: 'go', id: item.id, questName: item.title, loc, label: `前往${PLACE_CN[loc] || loc}（第 ${item.progress.step + 1}/${item.locations.length} 站）` };
+        } else if (item.type === 'stay') {
+          return { source: 'side', kind: 'go', id: item.id, questName: item.title, loc: item.destination, label: `在${PLACE_CN[item.destination] || item.destination}停留 ${item.seconds} 秒（已 ${Math.floor(item.progress.seconds)} 秒）` };
+        } else if (item.type === 'purchaseVisit') {
+          let bought = false;
+          try {
+            const raw = JSON.parse(localStorage.getItem('budget-survivor-state-v1') || '{}');
+            bought = (raw.expenses || []).some(e => e.date === todayKeyLocal() && e.category === item.category && Number(e.amount) >= item.amount);
+          } catch { /* 忽略 */ }
+          return bought
+            ? { source: 'side', kind: 'go', id: item.id, questName: item.title, loc: item.destination, label: `去${PLACE_CN[item.destination] || item.destination}找${item.npc}` }
+            : { source: 'side', kind: 'go', id: item.id, questName: item.title, loc: 'market', label: `先去超市买一份 ≥¥${item.amount} 的${item.category}并记账` };
+        }
+      }
+      const main = q.getMain && q.getMain();
+      if (main && main.current) {
+        return { source: 'main', kind: 'info', id: main.current.id, questName: main.current.title, loc: MAIN_GUIDE[main.current.id] || null, label: main.current.desc };
+      }
+    } catch { /* 忽略 */ }
+    return null;
+  }
+  let lastGuideJson = '';
+  let lastMainDone = null;
+  function guideTick() {
+    try {
+      const sp = window.BSSocial && window.BSSocial.consumeSpecial && window.BSSocial.consumeSpecial();
+      if (sp === 'squidward-max') playClip('clip-f');
+    } catch { /* 忽略 */ }
+    try {
+      const q = window.BudgetQuests;
+      if (q && q.getMain && q.MAIN_QUESTS) {
+        const dc = q.getMain().doneCount;
+        if (lastMainDone === null) lastMainDone = dc;
+        else if (dc > lastMainDone) {
+          const doneQuest = q.MAIN_QUESTS[dc - 1];
+          lastMainDone = dc;
+          if (doneQuest && doneQuest.id === 'first-meal') playClip('clip-a');
+        }
+      }
+    } catch { /* 忽略 */ }
+    const guide = computeGuide();
+    const json = JSON.stringify(guide);
+    if (json !== lastGuideJson) {
+      lastGuideJson = json;
+      const frame = $('dive-view');
+      if (frame && frame.contentWindow) frame.contentWindow.postMessage({ type: 'bikini-guide', guide }, location.origin);
+    }
+    if (guide) {
+      objectiveCard.hidden = false;
+      objectiveCard.textContent = `当前目标 · ${guide.questName}：${guide.label}`;
+    } else objectiveCard.hidden = true;
+  }
+  setInterval(guideTick, 1500);
+  window.addEventListener('message', event => {
+    if (event.origin !== location.origin) return;
+    const frame = $('dive-view');
+    if (!frame || event.source !== frame.contentWindow) return;
+    const data = event.data || {};
+    if (data.type !== 'bikini-quest-action') return;
+    const guide = computeGuide();
+    if (!guide) return;
+    if (data.action === 'arrive') {
+      const clip = CLIP_FOR[`${guide.source}:${guide.questId || guide.id}`];
+      if (clip) playClip(clip);
+    } else if (data.action === 'claim') {
+      if (guide.source === 'side' && guide.kind === 'claim') {
+        try { window.BudgetQuests.claimQuest(guide.id); } catch { /* 忽略 */ }
+        refresh();
+      } else if (guide.source === 'faction' && guide.kind === 'claim' && window.BSSocial) {
+        window.BSSocial.openNpc(guide.boss);
+      }
+    }
+  });
+
   refresh();
   afterIntro(() => {
     if (needSetup()) { showSetup(); return; }

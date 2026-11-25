@@ -172,6 +172,7 @@
 
   function renderCompass() {
     if (!controls) return;
+    if (guideNow && guideNow.loc && !pickup) { compass.hidden = true; return; }
     if (pickup) {
       const cam0 = controls.camera;
       const dx0 = pickup.x - cam0.x;
@@ -472,6 +473,109 @@
     layout.__bsPoliceWrapped = true;
     clearInterval(waitPolice);
   }, 500);
+
+
+  // —— v5 任务引导渲染：脚下光路 + 地点浮动感叹号 + 到达提示框 ——
+  let guideNow = null;
+  let guideDismissed = '';
+  window.addEventListener('message', (event) => {
+    if (event.source !== window.parent) return;
+    const data = event.data || {};
+    if (data.type === 'bikini-guide') guideNow = data.guide || null;
+  });
+  const guideCanvas = document.createElement('canvas');
+  guideCanvas.style.cssText = 'position:fixed;inset:0;z-index:55;pointer-events:none;';
+  document.body.appendChild(guideCanvas);
+  const guideMarker = document.createElement('div');
+  guideMarker.hidden = true;
+  guideMarker.style.cssText = 'position:fixed;z-index:56;pointer-events:none;transform:translate(-50%,-100%);text-align:center;';
+  guideMarker.innerHTML = '<div style="width:52px;height:52px;margin:0 auto;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe9a8,#ffb703);'
+    + 'color:#7a4d00;font:900 34px/52px system-ui;text-align:center;box-shadow:0 0 22px rgba(255,183,3,.85),0 0 0 3px rgba(255,233,168,.5)">!</div>'
+    + '<div class="guide-marker-label" style="margin-top:6px;background:rgba(10,35,45,.85);color:#ffe9a8;border-radius:999px;'
+    + 'padding:3px 10px;font:600 12px/1.5 system-ui;white-space:nowrap"></div>';
+  document.body.appendChild(guideMarker);
+  const guidePrompt = document.createElement('div');
+  guidePrompt.hidden = true;
+  guidePrompt.style.cssText = 'position:fixed;left:50%;bottom:110px;transform:translateX(-50%);z-index:57;'
+    + 'background:rgba(10,35,45,.92);border:1px solid rgba(255,183,3,.65);border-radius:16px;padding:12px 16px;'
+    + 'color:#eaf6ff;font:500 14px/1.5 system-ui;max-width:86vw;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.45)';
+  guidePrompt.innerHTML = '<div class="guide-prompt-text" style="margin-bottom:9px"></div>'
+    + '<button type="button" class="guide-prompt-btn" style="background:#ffb703;color:#231600;border:0;border-radius:999px;'
+    + 'padding:9px 26px;font:700 15px system-ui;cursor:pointer"></button>';
+  document.body.appendChild(guidePrompt);
+  guidePrompt.querySelector('.guide-prompt-btn').addEventListener('click', () => {
+    if (!guideNow) return;
+    guideDismissed = guideSignature();
+    guidePrompt.hidden = true;
+    window.parent.postMessage({ type: 'bikini-quest-action', action: guideNow.kind === 'claim' ? 'claim' : 'arrive', loc: guideNow.loc }, '*');
+  });
+  function guideSignature() {
+    if (!guideNow) return '';
+    return `${guideNow.kind}|${guideNow.questId || guideNow.id || ''}|${guideNow.loc || ''}|${guideNow.label || ''}`;
+  }
+  function projectPoint(px, pz, cam, W, H) {
+    const dx = px - cam.x, dz = pz - cam.z;
+    const f = dx * Math.sin(cam.yaw) + dz * -Math.cos(cam.yaw);
+    const r = dx * Math.cos(cam.yaw) + dz * Math.sin(cam.yaw);
+    const aspect = W / Math.max(1, H);
+    const fovV = 1.08, fovH = 2 * Math.atan(Math.tan(fovV / 2) * aspect);
+    const angH = Math.atan2(r, Math.max(0.001, f));
+    const angDown = Math.atan2(2.0, Math.max(0.5, f));
+    const sx = W / 2 + (angH / (fovH / 2)) * (W / 2);
+    const sy = H / 2 + ((angDown - (cam.pitch || 0)) / (fovV / 2)) * (H / 2);
+    return { sx, sy, f, angH, fovH };
+  }
+  function renderGuide(now) {
+    requestAnimationFrame(renderGuide);
+    const ctx = guideCanvas.getContext('2d');
+    const W = window.innerWidth, H = window.innerHeight;
+    if (guideCanvas.width !== W || guideCanvas.height !== H) { guideCanvas.width = W; guideCanvas.height = H; }
+    ctx.clearRect(0, 0, W, H);
+    const ctrl = window.__diveControls;
+    if (!guideNow || !guideNow.loc || !ctrl || !ctrl.camera) { guideMarker.hidden = true; guidePrompt.hidden = true; return; }
+    const anchor = ANCHORS.find(a => a.ids.includes(guideNow.loc));
+    if (!anchor) { guideMarker.hidden = true; guidePrompt.hidden = true; return; }
+    const cam = ctrl.camera;
+    const dist = Math.hypot(anchor.x - cam.x, anchor.z - cam.z);
+    // 光路：从脚下向目标每 2.2 米一个光点
+    if (dist > 4) {
+      const ux = (anchor.x - cam.x) / dist, uz = (anchor.z - cam.z) / dist;
+      const pulse = 0.65 + 0.35 * Math.sin(now / 280);
+      for (let d = 2.2; d < dist - 1; d += 2.2) {
+        const pt = projectPoint(cam.x + ux * d, cam.z + uz * d, cam, W, H);
+        if (pt.f < 0.6 || pt.sx < -30 || pt.sx > W + 30 || pt.sy < -30 || pt.sy > H + 30) continue;
+        const radius = Math.max(3, Math.min(15, 120 / pt.f));
+        ctx.beginPath();
+        ctx.arc(pt.sx, pt.sy, radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 205, 80, ${(0.75 * pulse).toFixed(3)})`;
+        ctx.shadowColor = 'rgba(255,183,3,.9)';
+        ctx.shadowBlur = 12;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+    }
+    // 感叹号标记（浮动）
+    const tp = projectPoint(anchor.x, anchor.z, cam, W, H);
+    const bob = Math.sin(now / 380) * 9;
+    guideMarker.hidden = false;
+    if (tp.f < 0.6 || Math.abs(tp.angH) > tp.fovH / 2 * 1.1) {
+      guideMarker.style.left = `${Math.max(46, Math.min(W - 46, tp.sx))}px`;
+      guideMarker.style.top = `${H * 0.38 + bob}px`;
+    } else {
+      guideMarker.style.left = `${tp.sx}px`;
+      guideMarker.style.top = `${Math.max(70, tp.sy - 64 + bob)}px`;
+    }
+    guideMarker.querySelector('.guide-marker-label').textContent =
+      `${LOC_NAMES[guideNow.loc] || guideNow.loc} · ${Math.round(dist)}m`;
+    // 到达提示框
+    const actionable = guideNow.kind === 'go' || guideNow.kind === 'claim';
+    if (actionable && dist <= 7.5 && guideSignature() !== guideDismissed) {
+      guidePrompt.hidden = false;
+      guidePrompt.querySelector('.guide-prompt-text').textContent = `${guideNow.questName}：${guideNow.label}`;
+      guidePrompt.querySelector('.guide-prompt-btn').textContent = guideNow.kind === 'claim' ? '交付任务' : '▶ 开始任务';
+    } else guidePrompt.hidden = true;
+  }
+  requestAnimationFrame(renderGuide);
 
   const waitControls = setInterval(() => {
     if (window.__diveControls) {

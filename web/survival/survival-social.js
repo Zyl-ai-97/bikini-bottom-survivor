@@ -93,7 +93,11 @@
     if (!(npc in state.affinity)) return;
     // 已站队后，敌对老板的好感冻结
     if (state.faction && BOSS_OF[state.faction] === npc && delta > 0) return;
+    const affBefore = state.affinity[npc];
     state.affinity[npc] = clampAffinity(state.affinity[npc] + delta);
+    if (npc === 'squidward' && affBefore < 100 && state.affinity[npc] >= 100 && !state.flags.squidMaxPlayed) {
+      state.flags.squidMax = 'pending';
+    }
     // 阵营锁定：两位老板谁先到 60，自动入营，对方清零转敌对
     if (!state.faction && BOSS_OF[npc] && state.affinity[npc] >= 60) {
       state.faction = npc;
@@ -619,11 +623,45 @@
     }
   });
 
+  // 当前阵营任务的导航目标（给 HUD 算引导光路用）
+  function getGuide() {
+    if (!state.faction) return null;
+    const bossName = NPCS[state.faction].name;
+    const bossLoc = state.faction === 'krabs' ? 'diner' : 'chum';
+    const def = currentQuestDef();
+    if (!def) return null;
+    if (!state.fq) {
+      return { loc: bossLoc, kind: 'info', questId: def.id, questName: def.name, label: `去找${bossName}接阵营任务` };
+    }
+    if (state.fq.sub && state.fq.sub.met) {
+      return { loc: bossLoc, kind: 'claim', boss: state.faction, questId: def.id, questName: def.name, label: `回去找${bossName}交付任务` };
+    }
+    if (def.type === 'visit' || def.type === 'wantedVisit') {
+      return { loc: def.loc, kind: 'go', questId: def.id, questName: def.name, label: def.desc };
+    }
+    if (def.type === 'chain') {
+      const idx = (state.fq.sub && state.fq.sub.idx) || 0;
+      return { loc: def.seq[idx], kind: 'go', questId: def.id, questName: def.name, label: `${def.desc}（第 ${idx + 1}/${def.seq.length} 站）` };
+    }
+    return { loc: null, kind: 'info', questId: def.id, questName: def.name, label: def.desc };
+  }
+  function consumeSpecial() {
+    if (state.flags.squidMax === 'pending') {
+      state.flags.squidMaxPlayed = true;
+      delete state.flags.squidMax;
+      save();
+      return 'squidward-max';
+    }
+    return null;
+  }
+
   window.BSSocial = {
     getAffinity: npc => state.affinity[npc] || 0,
     getFaction: () => state.faction,
     getVisited: () => ({ ...state.visited }),
     getState: () => state,
+    getGuide,
+    consumeSpecial,
     openNpc,
   };
 })();
