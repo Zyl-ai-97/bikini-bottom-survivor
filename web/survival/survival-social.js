@@ -613,7 +613,10 @@
       pending = { kind: 'npc', npc: data.npc };
       btn.textContent = `和${NPCS[data.npc].name}聊聊`;
       btn.hidden = false;
-      setTimeout(() => { if (pending && pending.npc === data.npc) { pending = null; btn.hidden = true; } }, 20000);
+      clearTimeout(window.__bsNpcHideTimer);
+      window.__bsNpcHideTimer = setTimeout(() => { if (pending && pending.kind === 'npc' && pending.npc === data.npc) { pending = null; btn.hidden = true; } }, 3000);
+    } else if (data.type === 'bikini-npc-far') {
+      if (pending && pending.kind === 'npc') { pending = null; btn.hidden = true; }
     } else if (data.type === 'bikini-passerby') {
       if (pending) return;
       pending = { kind: 'passerby' };

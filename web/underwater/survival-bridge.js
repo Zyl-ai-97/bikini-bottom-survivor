@@ -279,6 +279,7 @@
 
   let tickCount = 0;
   let currentAnchor = -1;
+  let tickTalkNpc = null;
   function tick() {
     if (!controls) return;
     const q = quests();
@@ -306,8 +307,19 @@
         }
         snapshotSides();
         postToParent({ type: 'bikini-place', loc: ANCHORS[nearest].ids[0] });
-        const npc = npcAt(ANCHORS[nearest].ids);
-        if (npc) postToParent({ type: 'bikini-npc-near', npc });
+      }
+    }
+    // NPC 对话范围：4.5 米（独立于地点锚点半径）
+    {
+      let talkNpc = null;
+      for (const anchor of ANCHORS) {
+        const d = Math.hypot(cam.x - anchor.x, cam.z - anchor.z);
+        if (d <= 4.5) { talkNpc = npcAt(anchor.ids); if (talkNpc) break; }
+      }
+      if (talkNpc !== tickTalkNpc) {
+        tickTalkNpc = talkNpc;
+        if (talkNpc) postToParent({ type: 'bikini-npc-near', npc: talkNpc });
+        else postToParent({ type: 'bikini-npc-far' });
       }
     }
     maybePasserby();
@@ -478,10 +490,42 @@
   // —— v5 任务引导渲染：脚下光路 + 地点浮动感叹号 + 到达提示框 ——
   let guideNow = null;
   let guideDismissed = '';
+  const VIEWPOINT_OF = { diner: 'diner', chum: 'chum', neighbors: 'neighbors', street: 'street', school: 'street', ridge: 'ridge', cove: 'cove', horn: 'horn', conch: 'conch', jellyfield: 'reef' };
+  let autoSteer = null;
+  function stopAutoSteer() { if (autoSteer) { clearInterval(autoSteer.timer); autoSteer = null; } }
+  window.addEventListener('keydown', stopAutoSteer);
+  window.addEventListener('pointerdown', stopAutoSteer);
   window.addEventListener('message', (event) => {
     if (event.source !== window.parent) return;
     const data = event.data || {};
     if (data.type === 'bikini-guide') guideNow = data.guide || null;
+    if (data.type === 'bikini-autopath' && data.loc) {
+      const ctrl = window.__diveControls;
+      const anchor = ANCHORS.find(a => a.ids.includes(data.loc));
+      if (!ctrl || !anchor) return;
+      stopAutoSteer();
+      showBanner(`正在前往：${LOC_NAMES[data.loc] || data.loc}`, 2600);
+      const view = VIEWPOINT_OF[data.loc];
+      if (view && ctrl.goto && ctrl.goto(view)) return; // 原生镜头滑行到该地点
+      // 没有对应观点的地点（如超市）：桥直接驾驶相机过去
+      const startedAt = Date.now();
+      const timer = setInterval(() => {
+        const cam = ctrl.camera;
+        if (!cam || Date.now() - startedAt > 45000) { stopAutoSteer(); return; }
+        const dx = anchor.x - cam.x, dz = anchor.z - cam.z;
+        const dist = Math.hypot(dx, dz);
+        if (dist <= anchor.r * 0.55) { stopAutoSteer(); return; }
+        const step = Math.min(dist - anchor.r * 0.4, 5.5 * 0.05);
+        cam.x += (dx / dist) * step;
+        cam.z += (dz / dist) * step;
+        const targetYaw = Math.atan2(dx, -dz);
+        let diff = targetYaw - cam.yaw;
+        while (diff > Math.PI) diff -= Math.PI * 2;
+        while (diff < -Math.PI) diff += Math.PI * 2;
+        cam.yaw += diff * 0.3;
+      }, 50);
+      autoSteer = { timer };
+    }
   });
   const guideCanvas = document.createElement('canvas');
   guideCanvas.style.cssText = 'position:fixed;inset:0;z-index:55;pointer-events:none;';
@@ -554,6 +598,23 @@
         ctx.shadowBlur = 0;
       }
     }
+    // 地点范围圈：锚点半径投影成地面金圈
+    {
+      ctx.beginPath();
+      let started = false;
+      for (let i = 0; i <= 28; i++) {
+        const a = (i / 28) * Math.PI * 2;
+        const pt = projectPoint(anchor.x + Math.cos(a) * anchor.r, anchor.z + Math.sin(a) * anchor.r, cam, W, H);
+        if (pt.f < 0.6) { started = false; continue; }
+        if (!started) { ctx.moveTo(pt.sx, pt.sy); started = true; } else ctx.lineTo(pt.sx, pt.sy);
+      }
+      ctx.strokeStyle = 'rgba(255, 205, 80, 0.55)';
+      ctx.lineWidth = 2.5;
+      ctx.shadowColor = 'rgba(255,183,3,.8)';
+      ctx.shadowBlur = 8;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
     // 感叹号标记（浮动）
     const tp = projectPoint(anchor.x, anchor.z, cam, W, H);
     const bob = Math.sin(now / 380) * 9;
@@ -569,7 +630,7 @@
       `${LOC_NAMES[guideNow.loc] || guideNow.loc} · ${Math.round(dist)}m`;
     // 到达提示框
     const actionable = guideNow.kind === 'go' || guideNow.kind === 'claim';
-    if (actionable && dist <= 7.5 && guideSignature() !== guideDismissed) {
+    if (actionable && dist <= anchor.r && guideSignature() !== guideDismissed) {
       guidePrompt.hidden = false;
       guidePrompt.querySelector('.guide-prompt-text').textContent = `${guideNow.questName}：${guideNow.label}`;
       guidePrompt.querySelector('.guide-prompt-btn').textContent = guideNow.kind === 'claim' ? '交付任务' : '▶ 开始任务';

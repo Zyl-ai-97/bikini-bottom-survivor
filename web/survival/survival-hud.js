@@ -1469,8 +1469,15 @@
   objectiveCard.hidden = true;
   objectiveCard.style.cssText = 'position:fixed;top:64px;left:50%;transform:translateX(-50%);z-index:55;'
     + 'background:rgba(10,35,45,.85);color:#ffe9a8;border:1px solid rgba(255,183,3,.55);border-radius:999px;'
-    + 'padding:6px 16px;font:600 13px/1.5 system-ui,sans-serif;pointer-events:none;max-width:92vw;text-align:center;';
+    + 'padding:6px 16px;font:600 13px/1.5 system-ui,sans-serif;pointer-events:auto;cursor:pointer;max-width:92vw;text-align:center;';
+  objectiveCard.title = '点击自动前往目标地点';
   document.body.appendChild(objectiveCard);
+  objectiveCard.addEventListener('click', () => {
+    const guide = computeGuide();
+    if (!guide || !guide.loc) return;
+    const frame = $('dive-view');
+    if (frame && frame.contentWindow) frame.contentWindow.postMessage({ type: 'bikini-autopath', loc: guide.loc }, location.origin);
+  });
   const clipOverlay = document.createElement('div');
   clipOverlay.hidden = true;
   clipOverlay.style.cssText = 'position:fixed;inset:0;z-index:200;background:#000;align-items:center;justify-content:center;';
@@ -1572,7 +1579,7 @@
     }
     if (guide) {
       objectiveCard.hidden = false;
-      objectiveCard.textContent = `当前目标 · ${guide.questName}：${guide.label}`;
+      objectiveCard.textContent = `当前目标 · ${guide.questName}：${guide.label}${guide.loc ? '（点我自动前往）' : ''}`;
     } else objectiveCard.hidden = true;
   }
   setInterval(guideTick, 1500);
