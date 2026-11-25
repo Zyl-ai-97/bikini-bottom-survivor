@@ -343,6 +343,136 @@
     }
   });
 
+
+  // —— v5 P2 警察追捕：按原项目管线克隆 c17 并重涂顶点色得到巡警 c20，
+  //    包裹 bikiniLayout.characters 逐帧驱动巡逻/追捕（不改原作者文件） ——
+  const POLICE_WAYPOINTS = [
+    { x: -50, z: -28.5 }, { x: -36, z: -27.4 }, { x: -20, z: -27.3 },
+    { x: -4, z: -29.5 }, { x: 2, z: -32.5 }, { x: -4, z: -29.5 },
+    { x: -20, z: -27.3 }, { x: -36, z: -27.4 },
+  ];
+  const police = { x: -50, z: -28.5, yaw: 0, step: 0, dist: 0, mode: 'patrol', wp: 1, lose: 0, cooldownUntil: 0, lastT: null };
+  function b64ToBytes(b64) { const bin = atob(b64); const out = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i); return out; }
+  function bytesToB64(bytes) { let bin = ''; const CH = 0x8000; for (let i = 0; i < bytes.length; i += CH) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CH)); return btoa(bin); }
+  function injectPoliceModel() {
+    const meshes = window.bikiniMeshes;
+    if (!meshes || !meshes.c17) return false;
+    if (meshes.c20) return true;
+    const src = meshes.c17;
+    const pos = b64ToBytes(src.p);
+    const col = b64ToBytes(src.c);
+    const nv = Math.floor(pos.length / 6);
+    const view = new DataView(pos.buffer, pos.byteOffset, pos.byteLength);
+    const mny = src.min[1], exy = src.extent[1];
+    const is = (k, r, g, b) => col[k] === r && col[k + 1] === g && col[k + 2] === b;
+    const paint = (k, c) => { col[k] = c[0]; col[k + 1] = c[1]; col[k + 2] = c[2]; };
+    for (let v = 0; v < nv; v++) {
+      const y = mny + (view.getUint16(v * 6 + 2, true) / 65535) * exy;
+      const k = v * 3;
+      if (is(k, 36, 44, 42)) paint(k, [30, 40, 95]); // 头顶深色 → 警帽
+      else if (is(k, 186, 172, 179) || is(k, 184, 170, 177)) paint(k, (y >= 1.30 && y < 1.42) ? [150, 180, 220] : [40, 55, 110]); // 帽檐银蓝 / 制服藏青
+      else if (is(k, 149, 137, 147)) paint(k, [33, 45, 90]);
+      else if (is(k, 60, 91, 103)) paint(k, [26, 28, 44]);
+      else if (is(k, 44, 53, 48)) paint(k, [20, 22, 34]);
+    }
+    meshes.c20 = { ...src, c: bytesToB64(col) };
+    return true;
+  }
+  function nearestWp() {
+    let best = 0, bd = Infinity;
+    POLICE_WAYPOINTS.forEach((w, i) => { const d = Math.hypot(w.x - police.x, w.z - police.z); if (d < bd) { bd = d; best = i; } });
+    return best;
+  }
+  function policePose(t) {
+    const ctrl = window.__diveControls;
+    if (!ctrl || !ctrl.camera) return null;
+    if (police.lastT == null) police.lastT = t;
+    const dt = Math.min(0.1, Math.max(0, t - police.lastT));
+    police.lastT = t;
+    const cam = ctrl.camera;
+    const q = quests();
+    let stars = 0;
+    try { stars = (q && q.getWanted && q.getWanted().stars) || 0; } catch { /* 忽略 */ }
+    const distP = Math.hypot(cam.x - police.x, cam.z - police.z);
+    const now = performance.now();
+    if (police.mode !== 'chase' && stars >= 3 && distP < 34 && now > police.cooldownUntil) {
+      police.mode = 'chase';
+      police.lose = 0;
+      showBanner('巡警盯上你了！快跑，或者躲进建筑！', 3000);
+    }
+    let target = null, speed = 0;
+    if (police.mode === 'chase') {
+      target = { x: cam.x, z: cam.z };
+      speed = 5.3;
+      if (distP < 2.2) {
+        police.mode = 'patrol';
+        police.cooldownUntil = now + 20000;
+        police.wp = nearestWp();
+        try {
+          q.addExpense({ amount: 50, category: '娱乐社交', note: '被巡警抓住罚款' });
+          q.clearWanted(5);
+          q.addReputation(-5, 'caught');
+        } catch { /* 忽略 */ }
+        showBanner('被巡警抓住了！罚款 ¥50，通缉清空，声望 -5', 4200);
+        target = null;
+      } else if (distP > 38) {
+        police.lose += dt;
+        if (police.lose > 8) {
+          police.mode = 'patrol';
+          police.wp = nearestWp();
+          try { q.clearWanted(1); } catch { /* 忽略 */ }
+          showBanner('甩掉巡警了！通缉 -1 星', 3600);
+          target = null;
+        }
+      } else police.lose = 0;
+    }
+    if (police.mode === 'patrol' && !target) {
+      target = POLICE_WAYPOINTS[police.wp];
+      speed = 2.0;
+      if (target && Math.hypot(target.x - police.x, target.z - police.z) < 1.2) {
+        police.wp = (police.wp + 1) % POLICE_WAYPOINTS.length;
+        target = POLICE_WAYPOINTS[police.wp];
+      }
+    }
+    let pace = 0;
+    if (target && dt > 0) {
+      const dx = target.x - police.x, dz = target.z - police.z;
+      const d = Math.hypot(dx, dz);
+      if (d > 0.05) {
+        const stepLen = Math.min(d, speed * dt);
+        police.x += (dx / d) * stepLen;
+        police.z += (dz / d) * stepLen;
+        police.yaw = Math.atan2(dx, dz);
+        police.dist += stepLen;
+        police.step = police.dist * 9.3;
+        pace = Math.min(1, speed / 5.3) * 0.89;
+      }
+    }
+    return {
+      id: 'c20', instanceId: 'c20-police', x: police.x, z: police.z,
+      yaw: police.yaw, heading: police.yaw, height: 1.57,
+      bob: 0.012 * pace * Math.sin(police.step) ** 2, lean: 0.022 * pace * Math.sin(police.step),
+      pace, step: police.step, walkTime: police.dist / 0.7,
+      greet: false, canGreet: false, leftArm: 0, rightArm: 0,
+    };
+  }
+  const waitPolice = setInterval(() => {
+    const layout = window.bikiniLayout;
+    if (!layout || typeof layout.characters !== 'function' || layout.__bsPoliceWrapped) return;
+    if (!injectPoliceModel()) return;
+    const orig = layout.characters.bind(layout);
+    layout.characters = (t, floor) => {
+      const list = orig(t, floor);
+      try {
+        const pose = policePose(t);
+        if (pose && Array.isArray(list)) return [...list, pose];
+      } catch { /* 忽略 */ }
+      return list;
+    };
+    layout.__bsPoliceWrapped = true;
+    clearInterval(waitPolice);
+  }, 500);
+
   const waitControls = setInterval(() => {
     if (window.__diveControls) {
       controls = window.__diveControls;
