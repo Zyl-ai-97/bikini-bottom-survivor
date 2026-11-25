@@ -1473,7 +1473,8 @@
   document.body.appendChild(objectiveCard);
   const clipOverlay = document.createElement('div');
   clipOverlay.hidden = true;
-  clipOverlay.style.cssText = 'position:fixed;inset:0;z-index:200;background:#000;display:flex;align-items:center;justify-content:center;';
+  clipOverlay.style.cssText = 'position:fixed;inset:0;z-index:200;background:#000;align-items:center;justify-content:center;';
+  clipOverlay.style.display = 'none';
   clipOverlay.innerHTML = '<video id="survival-clip-video" style="width:100%;height:100%;object-fit:contain" playsinline></video>'
     + '<button type="button" id="survival-clip-skip" style="position:absolute;right:18px;bottom:18px;background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:999px;padding:8px 18px;font:600 14px system-ui">跳过 ▸</button>';
   document.body.appendChild(clipOverlay);
@@ -1484,6 +1485,7 @@
     clipPlaying = false;
     try { clipVideo.pause(); } catch { /* 忽略 */ }
     clipOverlay.hidden = true;
+    clipOverlay.style.display = 'none';
     clipVideo.removeAttribute('src');
     try { clipVideo.load(); } catch { /* 忽略 */ }
   }
@@ -1491,6 +1493,7 @@
     if (clipPlaying) return;
     clipPlaying = true;
     clipOverlay.hidden = false;
+    clipOverlay.style.display = 'flex';
     clipVideo.src = `survival/video/${file}.mp4`;
     try {
       const p = clipVideo.play();
