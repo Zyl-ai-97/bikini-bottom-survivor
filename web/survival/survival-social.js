@@ -49,10 +49,10 @@
       story: ['你知道吗，我刚来比奇堡的时候，口袋里只有三枚硬币。', '是蟹老板给了我第一份工作，是大家让我留了下来。', '现在轮到你了。这个月，咱们一起把日子过成招牌菜！'],
     },
     plankton: {
-      name: '痞老板（幕后）', img: null,
-      greet: ['嘘——小声点。你手里那些“货”，我这儿价格公道。', '嘘——小声点。你手里那些“货”，我这儿价格公道。', '嘘——小声点。你手里那些“货”，我这儿价格公道。'],
-      chat: ['蟹堡秘方拿不到，收点二手钱包也不错。', '巡逻最近查得紧，你我都低调点。'],
-      story: [],
+      name: '痞老板', img: 'plankton',
+      greet: ['嘘——小声点。海之霸的门，只为有眼光的人开。', '又是你。说吧，是带了“货”，还是带了耳朵？', '合伙人！你可算来了。对面那只螃蟹的好日子，我看快到头了。'],
+      chat: ['蟹老板把秘方锁了三层。锁再多，也锁不住人心，你说对吧？', '巡逻最近查得紧，你我都低调点。有“货”随时来找我。', '我这辈子就输在一点：起步太晚。你不一样，你还年轻，站队要趁早。', '对面排队买堡的人，有一半是冲着秘方去的。配料表上写着呢——人心。'],
+      story: ['我和那只螃蟹，以前是合伙人。这事没几个人知道。', '散伙那天他说：秘方是命。我说：命是拿来改的。', '总有一天，我会让你亲眼看见，海之霸的招牌比蟹堡王亮。'],
     },
   };
 
@@ -65,21 +65,41 @@
   }
   function freshState() {
     return {
-      affinity: { krabs: 0, patrick: 0, squidward: 0, sandy: 0, puff: 0, spongebob: 0 },
+      affinity: { krabs: 0, patrick: 0, squidward: 0, sandy: 0, puff: 0, spongebob: 0, plankton: 0 },
+      faction: null,
       loot: 0, visited: {}, pickups: {}, chatDay: {}, giftDay: {}, storyDone: {}, metIntro: {},
     };
   }
   let state = load() || freshState();
+  // v5 迁移：老存档补痞老板好感与阵营字段，补完立即落盘
+  let migrated = false;
+  if (!('plankton' in state.affinity)) { state.affinity.plankton = 0; migrated = true; }
+  if (!('faction' in state)) { state.faction = null; migrated = true; }
+  if (migrated) save();
   function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch { /* 忽略 */ } }
   const todayKey = () => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   };
   const clampAffinity = v => Math.max(0, Math.min(100, v));
+  const BOSS_OF = { krabs: 'plankton', plankton: 'krabs' };
+  let justLocked = null; // 本次操作刚锁定的阵营（供对话播报）
   function addAffinity(npc, delta) {
     if (!(npc in state.affinity)) return;
+    // 已站队后，敌对老板的好感冻结
+    if (state.faction && BOSS_OF[state.faction] === npc && delta > 0) return;
     state.affinity[npc] = clampAffinity(state.affinity[npc] + delta);
+    // 阵营锁定：两位老板谁先到 60，自动入营，对方清零转敌对
+    if (!state.faction && BOSS_OF[npc] && state.affinity[npc] >= 60) {
+      state.faction = npc;
+      state.affinity[BOSS_OF[npc]] = 0;
+      justLocked = npc;
+    }
     save();
+  }
+  function factionAnnouncement(npc) {
+    if (npc === 'krabs') return '蟹老板一把攥住你的手：「好！从今天起，你就是蟹堡王的人。秘方要是出事，我第一个找你——开玩笑的。……不是开玩笑。」（你已站到蟹老板这边，痞老板与你敌对）';
+    return '痞老板跳上柜台与你平视：「明智的选择，合伙人。蟹堡王的秘方，迟早是我们的。对面那只螃蟹，从此是敌人了。」（你已站到痞老板这边，蟹老板与你敌对）';
   }
   function tierOf(npc) {
     const v = state.affinity[npc] || 0;
@@ -143,9 +163,9 @@
     if (!def || !def.img) { img.src = './survival/img/anim/rob-1.png'; return; }
     img.onerror = () => {
       img.onerror = () => { img.style.display = 'none'; };
-      img.src = `./survival/img/npc/${def.img}-normal.png?v=1124d`;
+      img.src = `./survival/img/npc/${def.img}-normal.png?v=1125b`;
     };
-    img.src = `./survival/img/npc/${def.img}-${expr}.png?v=1124d`;
+    img.src = `./survival/img/npc/${def.img}-${expr}.png?v=1125b`;
   }
   function refreshHud() { if (window.SurvivalHUD) window.SurvivalHUD.refresh(); }
   function setLine(text) { $('survival-npc-line').textContent = text; }
@@ -183,29 +203,13 @@
     setNote('');
     portrait(npc, 'normal');
 
-    if (npc === 'plankton') {
-      setLine(def.greet[0]);
-      const opts = [];
-      if (state.loot >= 20) {
-        opts.push({
-          label: `销赃 ¥${state.loot}（每¥20 消 1 星）`, primary: true,
-          onClick: () => {
-            const stars = Math.min(Math.floor(state.loot / 20), (quests.getWanted() || {}).stars || 0);
-            if (stars <= 0) { setLine('你现在一星都没有，拿钱来换空气吗？走走走。'); return; }
-            state.loot -= stars * 20;
-            save();
-            quests.clearWanted(stars);
-            setLine(`成交。${stars} 颗星，从记录上抹掉了。你我都没见过面。`);
-            setNote(`赃款 -¥${stars * 20} · 通缉 -${stars} 星`);
-            portrait(npc, 'happy');
-            refreshHud();
-            setOptions([{ label: '离开', onClick: closeDialog }]);
-          },
-        });
-      }
-      opts.push({ label: '打听行情', onClick: () => { setLine(def.chat[Math.floor(Math.random() * def.chat.length)]); } });
-      opts.push({ label: '离开', onClick: closeDialog });
-      setOptions(opts);
+    // 已站队后，敌对老板直接翻脸（痞老板敌对时连赃也不收）
+    if (state.faction && BOSS_OF[state.faction] === npc) {
+      setLine(npc === 'plankton'
+        ? '叛徒的味道，老远就闻到了。海之霸不欢迎你——滚回对面吃你的蟹黄堡去！'
+        : '哼，我都听说了。你现在是海之霸的人了？蟹堡王的门，你以后绕着走！');
+      portrait(npc, 'angry');
+      setOptions([{ label: '离开', onClick: closeDialog }]);
       return;
     }
 
@@ -218,8 +222,14 @@
         onClick: () => {
           state.chatDay[npc] = day;
           addAffinity(npc, 5);
-          setLine(def.chat[Math.floor(Math.random() * def.chat.length)]);
-          setNote('好感 +5');
+          if (justLocked) {
+            setLine(factionAnnouncement(justLocked));
+            setNote(`好感 +5 · 你已加入${justLocked === 'krabs' ? '蟹老板' : '痞老板'}阵营`);
+            justLocked = null;
+          } else {
+            setLine(def.chat[Math.floor(Math.random() * def.chat.length)]);
+            setNote('好感 +5');
+          }
           setAff(npc);
           portrait(npc, 'happy');
           openNpcOptions(npc);
@@ -232,8 +242,14 @@
         try {
           quests.addExpense({ amount: 10, category: '娱乐社交', note: `给${def.name}的小礼物` });
           addAffinity(npc, 8);
-          setLine('这……这怎么好意思。下次你来，我给你留好的。');
-          setNote('好感 +8 · 已记账 ¥10');
+          if (justLocked) {
+            setLine(factionAnnouncement(justLocked));
+            setNote(`好感 +8 · 你已加入${justLocked === 'krabs' ? '蟹老板' : '痞老板'}阵营`);
+            justLocked = null;
+          } else {
+            setLine('这……这怎么好意思。下次你来，我给你留好的。');
+            setNote('好感 +8 · 已记账 ¥10');
+          }
           portrait(npc, 'happy');
         } catch (error) {
           setLine('（礼物没送出去：' + (error.message || '记账失败') + '）');
@@ -244,6 +260,23 @@
         openNpcOptions(npc);
       },
     });
+    if (npc === 'plankton' && state.loot >= 20) {
+      opts.push({
+        label: `销赃 ¥${state.loot}（每¥20 消 1 星）`, primary: true,
+        onClick: () => {
+          const stars = Math.min(Math.floor(state.loot / 20), (quests.getWanted() || {}).stars || 0);
+          if (stars <= 0) { setLine('你现在一星都没有，拿钱来换空气吗？走走走。'); setOptions([{ label: '离开', onClick: closeDialog }]); return; }
+          state.loot -= stars * 20;
+          save();
+          quests.clearWanted(stars);
+          setLine(`成交。${stars} 颗星，从记录上抹掉了。你我都没见过面。`);
+          setNote(`赃款 -¥${stars * 20} · 通缉 -${stars} 星`);
+          portrait(npc, 'happy');
+          refreshHud();
+          setOptions([{ label: '离开', onClick: closeDialog }]);
+        },
+      });
+    }
     if ((state.affinity[npc] || 0) >= 60 && state.giftDay[npc] !== day) {
       opts.push({
         label: '收下回礼',
@@ -381,6 +414,7 @@
 
   window.BSSocial = {
     getAffinity: npc => state.affinity[npc] || 0,
+    getFaction: () => state.faction,
     getVisited: () => ({ ...state.visited }),
     getState: () => state,
     openNpc,
