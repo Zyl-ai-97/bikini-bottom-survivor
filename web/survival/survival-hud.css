@@ -378,10 +378,15 @@ body.survival-locked .survival-joystick { display: none; }
 .survival-atlas-card p { font-size: 12px; line-height: 1.5; margin: 4px 0 0; }
 .survival-phone__tabs { flex-wrap: wrap; }
 
-/* v4：新手教程 */
-.survival-tutorial-body { font-size: 14px; line-height: 1.7; min-height: 120px; }
-.survival-tutorial-body b { color: #ffb703; }
-.survival-tutorial-body p { margin: 6px 0 0; }
+/* v4：新手漫画教程 */
+.survival-tutorial-img {
+  width: 100%; aspect-ratio: 1 / 1; object-fit: cover; display: block;
+  border-radius: 12px; border: 2px solid rgba(255, 183, 3, .45); background: #123542;
+}
+.survival-tutorial-cap {
+  margin: 12px 2px 4px; font-size: 16px; line-height: 1.6; font-weight: 600;
+  color: var(--survival-text); min-height: 52px;
+}
 
 /* v4：抓水母小游戏 */
 .survival-jelly-field { position: relative; height: 300px; background: rgba(23, 70, 90, .5); border-radius: 12px; overflow: hidden; }

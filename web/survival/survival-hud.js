@@ -7,7 +7,7 @@
 
   const script = document.currentScript;
   const base = script ? new URL('.', script.src) : new URL('./survival/', location.href);
-  const cssUrl = new URL('survival-hud.css?v=1124c', base).href;
+  const cssUrl = new URL('survival-hud.css?v=1124e', base).href;
   if (!Array.from(document.querySelectorAll('link[rel~="stylesheet"]')).some(link => link.href === cssUrl)) {
     const link = document.createElement('link');
     link.rel = 'stylesheet';
@@ -220,8 +220,9 @@
 
     <div id="survival-tutorial" class="survival-overlay" hidden>
       <div class="survival-panel">
-        <h2 class="survival-panel__title">新手教程 <span id="survival-tutorial-step"></span></h2>
-        <div id="survival-tutorial-body" class="survival-tutorial-body"></div>
+        <h2 class="survival-panel__title">新手漫画 <span id="survival-tutorial-step"></span></h2>
+        <img id="survival-tutorial-img" class="survival-tutorial-img" alt="">
+        <p id="survival-tutorial-cap" class="survival-tutorial-cap"></p>
         <div class="survival-actions">
           <button id="survival-tutorial-skip" type="button">跳过教程</button>
           <button id="survival-tutorial-prev" type="button">上一步</button>
@@ -1198,18 +1199,23 @@
 
   // —— 新手教程（可跳过、可重看：战报页有「新手教程」按钮） ——
   const TUTORIAL_STEPS = [
-    '<b>目标：在比奇堡立足 30 天。</b><p>钱、声望、通缉三条线决定月底的立足评级（D–S）。余额就是你的 HP，归零会触发破产紧急支线。</p>',
-    '<b>移动：先下潜进小镇。</b><p>点海面的木牌下潜。桌面用 WASD 移动、按住拖动转视角；手机用左侧摇杆 + 右半屏滑动。跟着屏幕上的金色罗盘箭头走，它会指向你当前的任务地点。</p>',
-    '<b>记账：花一笔，记一笔。</b><p>点底部「记账」或快捷记账。单笔大额消费会触发暴击（红闪警告）；主线要买的东西，必须到对应地点附近才能记账（到店记账）。不超日预算能攒连击。</p>',
-    '<b>任务与海螺手机。</b><p>手机里有任务、账本、地图、图鉴、战报。靠近 NPC 点「聊天」接每日支线，攒声望、赚外快；声望高了收入有加成。通缉星涨满 5 星就不能接新任务——去海之霸找痞老板可以销赃消星。</p>',
-    '<b>过日子：回家睡觉推进一天。</b><p>回菠萝屋点「回家睡觉」，看完每日小结进入下一天。每天有随机事件和小镇海况，出门前看一眼手机。祝你立足成功！</p>',
+    { img: './survival/img/tutorial/comic-1.png', fb: './survival/img/npc/spongebob-normal.png', cap: '欢迎来到比奇堡！带 ¥1500，立足 30 天，月底评级冲 S！' },
+    { img: './survival/img/tutorial/town-street.webp', cap: '点木牌下潜进小镇：摇杆 / WASD 移动，跟着金色箭头找任务。' },
+    { img: './survival/img/tutorial/comic-2.png', fb: './survival/img/npc/krabs-normal.png', cap: '花一笔记一笔：余额就是 HP，大额消费会暴击！' },
+    { img: './survival/img/tutorial/comic-3.png', fb: './survival/img/npc/patrick-normal.png', cap: '靠近 NPC 点「聊天」，接支线、攒声望、赚外快。' },
+    { img: './survival/img/anim/phone-2.png', cap: '海螺手机里有任务、账本、地图、图鉴和战报。' },
+    { img: './survival/img/anim/sleep-2.png', cap: '回菠萝屋睡觉推进一天。别破产，破产有紧急支线！' },
   ];
   let tutorialIndex = 0;
   function renderTutorial() {
-    $('survival-tutorial-step').textContent = `${tutorialIndex + 1}/${TUTORIAL_STEPS.length}`;
-    $('survival-tutorial-body').innerHTML = TUTORIAL_STEPS[tutorialIndex];
+    const step = TUTORIAL_STEPS[tutorialIndex];
+    $('survival-tutorial-step').textContent = `第 ${tutorialIndex + 1} 格 / ${TUTORIAL_STEPS.length}`;
+    const img = $('survival-tutorial-img');
+    img.onerror = () => { img.onerror = null; if (step.fb) img.src = step.fb; };
+    img.src = step.img;
+    $('survival-tutorial-cap').textContent = step.cap;
     $('survival-tutorial-prev').disabled = tutorialIndex === 0;
-    $('survival-tutorial-next').textContent = tutorialIndex === TUTORIAL_STEPS.length - 1 ? '开始游戏' : '下一步';
+    $('survival-tutorial-next').textContent = tutorialIndex === TUTORIAL_STEPS.length - 1 ? '开始游戏' : '下一格';
   }
   function openTutorial() { tutorialIndex = 0; renderTutorial(); open($('survival-tutorial')); }
   function closeTutorial() {
