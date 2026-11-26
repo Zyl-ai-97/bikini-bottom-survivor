@@ -163,12 +163,12 @@
       const stars = ((quests.getWanted && quests.getWanted()) || {}).stars || 0;
       if (loc === def.loc && stars >= def.minStars) sub.met = true;
     } else if (def.type === 'chain') {
-      if (sub.deadline && Date.now() > sub.deadline) { sub.idx = 0; sub.deadline = null; }
+      if (sub.deadline && sub.deadline < 1e11 && performance.now() > sub.deadline) { sub.idx = 0; sub.deadline = null; }
       const expect = def.seq[sub.idx || 0];
       if (loc === expect) {
         if ((sub.idx || 0) === 0 && def.hourFrom != null && !hourIn(hourNow(), def.hourFrom, def.hourTo)) return;
         sub.idx = (sub.idx || 0) + 1;
-        if (def.within && sub.idx === 1) sub.deadline = Date.now() + def.within * 1000;
+        if (def.within && sub.idx === 1) sub.deadline = performance.now() + def.within * 1000;
         if (sub.idx >= def.seq.length) sub.met = true;
       }
     }
@@ -603,7 +603,7 @@
     const data = event.data || {};
     if (data.type === 'bikini-place' && data.loc) {
       try { fqOnPlace(data.loc); } catch { /* 忽略 */ }
-      window.__bsNearPlace = { loc: data.loc, at: Date.now() };
+      window.__bsNearPlace = { loc: data.loc, at: performance.now() };
       const day = todayKey();
       if (!state.visited[data.loc]) {
         state.visited[data.loc] = day;

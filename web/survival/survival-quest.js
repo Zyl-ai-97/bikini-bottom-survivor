@@ -634,7 +634,7 @@ if (typeof window !== "undefined") {
       for (const entry of activeSides(state, time.date)) {
         const quest = SIDE_BY_ID.get(entry.id);
         if (entry.id === DELIVERY_ID && entry.lastVisitAt !== undefined
-          && visitedAt - entry.lastVisitAt > DELIVERY_LEG_MS) {
+          && visitedAt - entry.lastVisitAt > DELIVERY_LEG_MS * (typeof window !== "undefined" && typeof window.__bsTimeScale === "function" ? window.__bsTimeScale() : 1)) {
           entry.status = "failed";
           continue;
         }

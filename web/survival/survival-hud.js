@@ -248,6 +248,7 @@
         <div class="survival-phone__screen">
           <header class="survival-phone__bar">
             <span>海螺手机</span>
+            <span id="survival-phone-clock" style="font-variant-numeric:tabular-nums;opacity:.85"></span>
             <button id="survival-phone-close" type="button" aria-label="关闭海螺手机">×</button>
           </header>
           <nav class="survival-phone__tabs" role="tablist">
@@ -561,6 +562,19 @@
     return ['sunny', 'current', 'jelly'][h % 3];
   }
 
+  // —— 加速游戏时钟：1 现实秒 = 10 游戏分钟。锚点 bs-clock 由海面页 Date 包装与水下桥共用 ——
+  function realNowMs() { return performance.timeOrigin + performance.now(); }
+  function setGameClock(gameEpochMs) {
+    try {
+      localStorage.setItem('bs-clock', JSON.stringify({ r: Math.round(realNowMs()), g: Math.round(gameEpochMs) }));
+      localStorage.setItem('bs-day-offset', '0');
+    } catch { /* 忽略 */ }
+  }
+  function ensureGameClock() {
+    try { if (localStorage.getItem('bs-clock')) return; } catch { return; }
+    setGameClock(Date.now());
+  }
+
   // —— 日期推进（DESIGN-v4 第 2、3 项）：起始日记录在 bs-start-date，偏移在 bs-day-offset ——
   const dayKeyOf = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
   function dayIndex() {
@@ -603,8 +617,9 @@
     const fade = $('survival-fade');
     const advance = () => {
       try {
-        const off = (parseInt(localStorage.getItem('bs-day-offset') || '0', 10) || 0) + 1;
-        localStorage.setItem('bs-day-offset', String(off));
+        const now = new Date();
+        const target = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 7, 0, 0, 0);
+        setGameClock(target.getTime());
         localStorage.setItem('bs-just-slept', '1');
       } catch { /* 存储不可用时仍重载 */ }
       try { location.reload(); } catch { fade.classList.remove('is-on'); fade.hidden = true; }
@@ -620,6 +635,7 @@
   }
 
   function refresh() {
+    if (!needSetup()) ensureGameClock();
     const stats = api.getStats();
     const derived = call(quests, 'getDerived');
     const hpValue = derived && Number.isFinite(derived.hp) ? derived.hp : stats.hp;
@@ -1050,7 +1066,7 @@
       && main.current.category === category && amount >= main.current.amount) {
       const needLoc = MAIN_PLACE[category];
       const near = window.__bsNearPlace;
-      if (needLoc && !(near && near.loc === needLoc && Date.now() - near.at < 90000)) {
+      if (needLoc && !(near && near.loc === needLoc && performance.now() - near.at < 90000)) {
         toast(`主线要到店消费：先游到${LOC_NAMES[needLoc]}附近，再记这笔`);
         return null;
       }
@@ -1141,6 +1157,7 @@
         main: localStorage.getItem('budget-survivor-state-v1'),
         social: localStorage.getItem('budget-survivor-social-v1'),
         offset: localStorage.getItem('bs-day-offset'),
+        clock: localStorage.getItem('bs-clock'),
         start: localStorage.getItem('bs-start-date'),
       };
       const code = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
@@ -1155,6 +1172,7 @@
       if (payload.main) localStorage.setItem('budget-survivor-state-v1', payload.main);
       if (payload.social) localStorage.setItem('budget-survivor-social-v1', payload.social);
       if (payload.offset) localStorage.setItem('bs-day-offset', payload.offset);
+      if (payload.clock) localStorage.setItem('bs-clock', payload.clock);
       if (payload.start) localStorage.setItem('bs-start-date', payload.start);
       location.reload();
     } catch { toast('存档码无效，导入失败'); }
@@ -1593,6 +1611,14 @@
     if (demoBtn) demoBtn.click();
     close($('survival-setup'));
   });
+  setInterval(() => {
+    const el = $('survival-phone-clock');
+    if (!el || $('survival-phone-overlay').hidden) return;
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    el.textContent = `第 ${dayIndex()} 天 ${hh}:${mm}`;
+  }, 1000);
   setInterval(guideTick, 1500);
   window.addEventListener('message', event => {
     if (event.origin !== location.origin) return;
