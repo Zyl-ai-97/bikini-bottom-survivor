@@ -1593,43 +1593,7 @@
     if (demoBtn) demoBtn.click();
     close($('survival-setup'));
   });
-  const ctaStyle = document.createElement('style');
-  ctaStyle.textContent = '@keyframes bs-cta-pulse { 0%,100% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.06); } }';
-  document.head.appendChild(ctaStyle);
-  const diveCta = document.createElement('button');
-  diveCta.type = 'button';
-  diveCta.id = 'survival-dive-cta';
-  diveCta.textContent = '下潜进入比奇堡 · 开始立足 ▸';
-  diveCta.hidden = true;
-  diveCta.style.cssText = 'position:fixed;left:50%;bottom:100px;transform:translateX(-50%);z-index:56;'
-    + 'background:#ffb703;color:#231600;border:0;border-radius:999px;padding:14px 32px;'
-    + 'font:800 17px system-ui,sans-serif;cursor:pointer;box-shadow:0 8px 28px rgba(255,183,3,.55);'
-    + 'animation:bs-cta-pulse 1.6s ease-in-out infinite;';
-  document.body.appendChild(diveCta);
-  let ctaHiddenUntil = 0;
-  let underwaterActive = false;
-  diveCta.addEventListener('click', () => {
-    // 与点飞过的木牌 / 按回车同一条下潜路径（surface/app.js 监听 Enter 释放木牌）
-    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
-    window.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', bubbles: true }));
-    ctaHiddenUntil = Date.now() + 12000;
-    diveCta.hidden = true;
-  });
-  window.addEventListener('message', event => {
-    if (event.origin !== location.origin) return;
-    const frame = $('dive-view');
-    if (!frame || event.source !== frame.contentWindow) return;
-    const data = event.data || {};
-    if (data.type === 'bikini-place') underwaterActive = true;
-    if (data.type === 'bikini-dive-return') underwaterActive = false;
-  });
-  function updateDiveCta() {
-    let started = false;
-    try { started = !needSetup(); } catch { /* 忽略 */ }
-    const anyOverlay = overlays.some(o => o && !o.hidden);
-    diveCta.hidden = !(started && !anyOverlay && !underwaterActive && Date.now() > ctaHiddenUntil);
-  }
-  setInterval(() => { guideTick(); updateDiveCta(); }, 1500);
+  setInterval(guideTick, 1500);
   window.addEventListener('message', event => {
     if (event.origin !== location.origin) return;
     const frame = $('dive-view');
