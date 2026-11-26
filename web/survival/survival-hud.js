@@ -182,6 +182,7 @@
         </label>
         <div class="survival-actions">
           <button id="survival-start" type="button" class="survival-primary">开始生存</button>
+          <button id="survival-setup-demo" type="button">演示模式（第 12 天 · 直接看玩法）</button>
         </div>
       </div>
     </div>
@@ -1199,12 +1200,14 @@
 
   // —— 新手教程（可跳过、可重看：战报页有「新手教程」按钮） ——
   const TUTORIAL_STEPS = [
-    { img: './survival/img/tutorial/comic-1.png', fb: './survival/img/npc/spongebob-normal.png', cap: '欢迎来到比奇堡！带 ¥1500，立足 30 天，月底评级冲 S！' },
-    { img: './survival/img/tutorial/town-street.webp', cap: '点木牌下潜进小镇：摇杆 / WASD 移动，跟着金色箭头找任务。' },
-    { img: './survival/img/tutorial/comic-2.png', fb: './survival/img/npc/krabs-normal.png', cap: '花一笔记一笔：余额就是 HP，大额消费会暴击！' },
-    { img: './survival/img/tutorial/comic-3.png', fb: './survival/img/npc/patrick-normal.png', cap: '靠近 NPC 点「聊天」，接支线、攒声望、赚外快。' },
-    { img: './survival/img/tutorial/comic-5.png', fb: './survival/img/anim/phone-2.png', cap: '海螺手机里有任务、账本、地图、图鉴和战报。' },
-    { img: './survival/img/anim/sleep-2.png', cap: '回菠萝屋睡觉推进一天。别破产，破产有紧急支线！' },
+    { img: './survival/img/tutorial/comic-1.png', fb: './survival/img/npc/spongebob-normal.png', cap: '欢迎来到比奇堡！带 ¥1500 立足 30 天：余额就是 HP，月底评级冲 S。' },
+    { img: './survival/img/tutorial/town-street.webp', cap: '点木牌下潜进小镇。屏幕上方有「当前目标」，点它能自动前往任务地点。' },
+    { img: './survival/img/tutorial/comic-2.png', fb: './survival/img/npc/krabs-normal.png', cap: '花一笔记一笔：大额消费会暴击扣 HP，不超日预算攒连击。' },
+    { img: './survival/img/tutorial/comic-3.png', fb: './survival/img/npc/patrick-normal.png', cap: '贴近 NPC（4.5 米内）点「聊聊」：接支线、攒好感、赚外快。' },
+    { img: './survival/img/tutorial/comic-5.png', fb: './survival/img/anim/phone-2.png', cap: '海螺手机里有任务、账本、地图、图鉴和战报，随时打开看。' },
+    { img: './survival/img/tutorial/comic-4.png', fb: './survival/img/npc/squidward-normal.png', cap: '蟹老板和痞老板在暗斗秘方：谁的好感先到 60，你就加入谁的阵营。' },
+    { img: './survival/img/poster-main.png', cap: '通缉到 3 星，藏青制服巡警会追你！抓到罚款 ¥50，跑开 38 米能甩掉。' },
+    { img: './survival/img/anim/sleep-2.png', cap: '回菠萝屋睡觉推进一天。第 30 天，看你的立足评级。' },
   ];
   let tutorialIndex = 0;
   function renderTutorial() {
@@ -1582,7 +1585,51 @@
       objectiveCard.textContent = `当前目标 · ${guide.questName}：${guide.label}${guide.loc ? '（点我自动前往）' : ''}`;
     } else objectiveCard.hidden = true;
   }
-  setInterval(guideTick, 1500);
+
+  // —— 开局演示模式入口 + 海面「下潜」大按钮（让评审 30 秒内进入玩法） ——
+  const setupDemoBtn = $('survival-setup-demo');
+  if (setupDemoBtn) setupDemoBtn.addEventListener('click', () => {
+    const demoBtn = $('survival-demo-mode');
+    if (demoBtn) demoBtn.click();
+    close($('survival-setup'));
+  });
+  const ctaStyle = document.createElement('style');
+  ctaStyle.textContent = '@keyframes bs-cta-pulse { 0%,100% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.06); } }';
+  document.head.appendChild(ctaStyle);
+  const diveCta = document.createElement('button');
+  diveCta.type = 'button';
+  diveCta.id = 'survival-dive-cta';
+  diveCta.textContent = '下潜进入比奇堡 · 开始立足 ▸';
+  diveCta.hidden = true;
+  diveCta.style.cssText = 'position:fixed;left:50%;bottom:100px;transform:translateX(-50%);z-index:56;'
+    + 'background:#ffb703;color:#231600;border:0;border-radius:999px;padding:14px 32px;'
+    + 'font:800 17px system-ui,sans-serif;cursor:pointer;box-shadow:0 8px 28px rgba(255,183,3,.55);'
+    + 'animation:bs-cta-pulse 1.6s ease-in-out infinite;';
+  document.body.appendChild(diveCta);
+  let ctaHiddenUntil = 0;
+  let underwaterActive = false;
+  diveCta.addEventListener('click', () => {
+    // 与点飞过的木牌 / 按回车同一条下潜路径（surface/app.js 监听 Enter 释放木牌）
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    window.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', bubbles: true }));
+    ctaHiddenUntil = Date.now() + 12000;
+    diveCta.hidden = true;
+  });
+  window.addEventListener('message', event => {
+    if (event.origin !== location.origin) return;
+    const frame = $('dive-view');
+    if (!frame || event.source !== frame.contentWindow) return;
+    const data = event.data || {};
+    if (data.type === 'bikini-place') underwaterActive = true;
+    if (data.type === 'bikini-dive-return') underwaterActive = false;
+  });
+  function updateDiveCta() {
+    let started = false;
+    try { started = !needSetup(); } catch { /* 忽略 */ }
+    const anyOverlay = overlays.some(o => o && !o.hidden);
+    diveCta.hidden = !(started && !anyOverlay && !underwaterActive && Date.now() > ctaHiddenUntil);
+  }
+  setInterval(() => { guideTick(); updateDiveCta(); }, 1500);
   window.addEventListener('message', event => {
     if (event.origin !== location.origin) return;
     const frame = $('dive-view');

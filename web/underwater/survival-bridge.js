@@ -309,12 +309,20 @@
         postToParent({ type: 'bikini-place', loc: ANCHORS[nearest].ids[0] });
       }
     }
-    // NPC 对话范围：4.5 米（独立于地点锚点半径）
+    // NPC 对话范围：4.5 米，按角色在小镇里的真实站位判定（不用地点锚点：
+    // 邻居区三位 NPC 共用一个锚点，锚点判定会串人；派大星家离锚点 11 米更会漏检）
     {
-      let talkNpc = null;
-      for (const anchor of ANCHORS) {
-        const d = Math.hypot(cam.x - anchor.x, cam.z - anchor.z);
-        if (d <= 4.5) { talkNpc = npcAt(anchor.ids); if (talkNpc) break; }
+      let talkNpc = null, bestD = 4.5;
+      for (const [npc, pos] of Object.entries(residentPos)) {
+        const d = Math.hypot(cam.x - pos.x, cam.z - pos.z);
+        if (d <= bestD) { bestD = d; talkNpc = npc; }
+      }
+      if (!talkNpc) {
+        for (const anchor of ANCHORS) {
+          if (anchor.ids.includes('neighbors')) continue;
+          const d = Math.hypot(cam.x - anchor.x, cam.z - anchor.z);
+          if (d <= 4.5) { talkNpc = npcAt(anchor.ids); if (talkNpc) break; }
+        }
       }
       if (talkNpc !== tickTalkNpc) {
         tickTalkNpc = talkNpc;
@@ -365,6 +373,9 @@
     { x: -20, z: -27.3 }, { x: -36, z: -27.4 },
   ];
   const police = { x: -50, z: -28.5, yaw: 0, step: 0, dist: 0, mode: 'patrol', wp: 1, lose: 0, cooldownUntil: 0, lastT: null };
+  // 角色模型 id → 可对话 NPC（c16 为镇中心居民，作泡芙老师站位）
+  const NPC_OF_MODEL = { c01: 'spongebob', c02: 'patrick', c03: 'squidward', c04: 'krabs', c05: 'plankton', c06: 'sandy', c16: 'puff' };
+  const residentPos = {};
   function b64ToBytes(b64) { const bin = atob(b64); const out = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i); return out; }
   function bytesToB64(bytes) { let bin = ''; const CH = 0x8000; for (let i = 0; i < bytes.length; i += CH) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CH)); return btoa(bin); }
   function injectPoliceModel() {
@@ -476,6 +487,12 @@
     const orig = layout.characters.bind(layout);
     layout.characters = (t, floor) => {
       const list = orig(t, floor);
+      if (Array.isArray(list)) {
+        for (const pl of list) {
+          const npc = NPC_OF_MODEL[pl.id];
+          if (npc && typeof pl.x === 'number') residentPos[npc] = { x: pl.x, z: pl.z };
+        }
+      }
       try {
         const pose = policePose(t);
         if (pose && Array.isArray(list)) return [...list, pose];
