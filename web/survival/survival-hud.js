@@ -315,6 +315,9 @@
             <section id="survival-phone-atlas" class="survival-phone__page" role="tabpanel" hidden>
               <h3 class="survival-panel__title">地点图鉴</h3>
               <div id="survival-atlas-grid" class="survival-atlas-grid"></div>
+              <h3 class="survival-panel__title">动画回放</h3>
+              <p class="survival-map-hint">动画第一次触发后解锁，之后可在这里随时重看。</p>
+              <div id="survival-replay-list" class="survival-atlas-grid"></div>
             </section>
           </div>
           <div class="survival-phone__home"></div>
@@ -474,7 +477,29 @@
     horn: '号角礁——形状像号角的礁石群。',
     conch: '海螺街——镇上最安静的街道，适合散步。',
   };
+  function renderReplay() {
+    const list = $('survival-replay-list');
+    if (!list) return;
+    list.textContent = '';
+    const unlocked = unlockedClips();
+    for (const [file, title] of Object.entries(CLIP_TITLES)) {
+      const on = unlocked.includes(file);
+      const card = document.createElement('div');
+      card.className = 'survival-atlas-card' + (on ? ' is-on' : '');
+      const b = document.createElement('b');
+      b.textContent = on ? title : '？？？';
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = on ? '▶ 回放' : '未解锁';
+      btn.disabled = !on;
+      if (on) btn.addEventListener('click', () => { closePhone(); playClip(file); });
+      card.append(b, btn);
+      list.appendChild(card);
+    }
+  }
+
   function renderAtlas() {
+    renderReplay();
     const grid = $('survival-atlas-grid');
     grid.textContent = '';
     const visited = window.BSSocial ? window.BSSocial.getVisited() : {};
@@ -1517,9 +1542,25 @@
     clipVideo.removeAttribute('src');
     try { clipVideo.load(); } catch { /* 忽略 */ }
   }
+  const CLIP_TITLES = {
+    'clip-a': '第一餐 · 蟹堡王', 'clip-b': '秘方保卫战', 'clip-c': '痞老板偷堡',
+    'clip-d': '蟹老板收银台', 'clip-e': '派大星的冰淇淋', 'clip-f': '章鱼哥 · 好感满专属',
+    'clip-g': '章鱼哥收银台', 'clip-h': '海绵宝宝 · 好感满专属', 'clip-i': '派大星 · 好感满专属',
+    'clip-j': '珊迪 · 好感满专属', 'clip-k': '四人同心 · 全员好感满',
+  };
+  function unlockedClips() {
+    try { return JSON.parse(localStorage.getItem('bs-clips-unlocked') || '[]'); } catch { return []; }
+  }
+  function markClipUnlocked(file) {
+    try {
+      const u = unlockedClips();
+      if (!u.includes(file)) { u.push(file); localStorage.setItem('bs-clips-unlocked', JSON.stringify(u)); }
+    } catch { /* 忽略 */ }
+  }
   function playClip(file) {
     if (clipPlaying) return;
     clipPlaying = true;
+    markClipUnlocked(file);
     clipOverlay.hidden = false;
     clipOverlay.style.display = 'flex';
     clipVideo.src = `survival/video/${file}.mp4`;
@@ -1577,7 +1618,8 @@
   function guideTick() {
     try {
       const sp = window.BSSocial && window.BSSocial.consumeSpecial && window.BSSocial.consumeSpecial();
-      if (sp === 'squidward-max') playClip('clip-f');
+      const SPECIAL_CLIP = { 'squidward-max': 'clip-f', 'spongebob-max': 'clip-h', 'patrick-max': 'clip-i', 'sandy-max': 'clip-j', 'four-max': 'clip-k' };
+      if (sp && SPECIAL_CLIP[sp]) playClip(SPECIAL_CLIP[sp]);
     } catch { /* 忽略 */ }
     try {
       const q = window.BudgetQuests;

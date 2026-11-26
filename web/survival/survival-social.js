@@ -95,8 +95,18 @@
     if (state.faction && BOSS_OF[state.faction] === npc && delta > 0) return;
     const affBefore = state.affinity[npc];
     state.affinity[npc] = clampAffinity(state.affinity[npc] + delta);
-    if (npc === 'squidward' && affBefore < 100 && state.affinity[npc] >= 100 && !state.flags.squidMaxPlayed) {
-      state.flags.squidMax = 'pending';
+    // 好感首次冲满 100：排队播该 NPC 的专属动画（每人一次）
+    const MAX_CLIP_OF = { spongebob: 'spongebob-max', patrick: 'patrick-max', sandy: 'sandy-max', squidward: 'squidward-max' };
+    if (MAX_CLIP_OF[npc] && affBefore < 100 && state.affinity[npc] >= 100
+      && !state.flags['maxPlayed_' + npc] && !(npc === 'squidward' && state.flags.squidMaxPlayed)) {
+      state.flags.maxQueue = state.flags.maxQueue || [];
+      if (!state.flags.maxQueue.includes(MAX_CLIP_OF[npc])) state.flags.maxQueue.push(MAX_CLIP_OF[npc]);
+    }
+    // 四位主角（海绵宝宝/派大星/章鱼哥/蟹老板）好感全满：追加全员专属动画
+    if (!state.flags.fourMaxPlayed
+      && ['spongebob', 'patrick', 'squidward', 'krabs'].every(n => (state.affinity[n] || 0) >= 100)) {
+      state.flags.maxQueue = state.flags.maxQueue || [];
+      if (!state.flags.maxQueue.includes('four-max')) state.flags.maxQueue.push('four-max');
     }
     // 阵营锁定：两位老板谁先到 60，自动入营，对方清零转敌对
     if (!state.faction && BOSS_OF[npc] && state.affinity[npc] >= 60) {
@@ -362,7 +372,11 @@
             setNote(`好感 +5 · 你已加入${justLocked === 'krabs' ? '蟹老板' : '痞老板'}阵营`);
             justLocked = null;
           } else {
-            setLine(def.chat[Math.floor(Math.random() * def.chat.length)]);
+            // 防连续重复：同一 NPC 连续两次不说同一句
+            let ci = Math.floor(Math.random() * def.chat.length);
+            if (def.chat.length > 1 && state.flags['lastChat_' + npc] === ci) ci = (ci + 1) % def.chat.length;
+            state.flags['lastChat_' + npc] = ci;
+            setLine(def.chat[ci]);
             setNote('好感 +5');
           }
           setAff(npc);
@@ -649,8 +663,20 @@
     return { loc: null, kind: 'info', questId: def.id, questName: def.name, label: def.desc };
   }
   function consumeSpecial() {
-    if (state.flags.squidMax === 'pending') {
+    const queue = state.flags.maxQueue;
+    if (Array.isArray(queue) && queue.length) {
+      const key = queue.shift();
+      if (key === 'four-max') state.flags.fourMaxPlayed = true;
+      else {
+        state.flags['maxPlayed_' + key.replace('-max', '')] = true;
+        if (key === 'squidward-max') state.flags.squidMaxPlayed = true;
+      }
+      save();
+      return key;
+    }
+    if (state.flags.squidMax === 'pending') { // 旧存档兼容（章鱼哥旧字段）
       state.flags.squidMaxPlayed = true;
+      state.flags.maxPlayed_squidward = true;
       delete state.flags.squidMax;
       save();
       return 'squidward-max';
