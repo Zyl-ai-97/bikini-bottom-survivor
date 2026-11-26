@@ -102,9 +102,9 @@
       state.flags.maxQueue = state.flags.maxQueue || [];
       if (!state.flags.maxQueue.includes(MAX_CLIP_OF[npc])) state.flags.maxQueue.push(MAX_CLIP_OF[npc]);
     }
-    // 四位主角（海绵宝宝/派大星/章鱼哥/蟹老板）好感全满：追加全员专属动画
+    // 超级英雄四人组（海绵宝宝/派大星/章鱼哥/珊迪）好感全满：追加全员专属动画
     if (!state.flags.fourMaxPlayed
-      && ['spongebob', 'patrick', 'squidward', 'krabs'].every(n => (state.affinity[n] || 0) >= 100)) {
+      && ['spongebob', 'patrick', 'squidward', 'sandy'].every(n => (state.affinity[n] || 0) >= 100)) {
       state.flags.maxQueue = state.flags.maxQueue || [];
       if (!state.flags.maxQueue.includes('four-max')) state.flags.maxQueue.push('four-max');
     }
