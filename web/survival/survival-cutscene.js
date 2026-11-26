@@ -5,13 +5,13 @@
 (() => {
   'use strict';
   const SCENES = {
-    eat: ['eat-1.png', 'eat-2.png', 'eat-1.png'],
-    ice: ['ice-1.png', 'ice-2.png'],
-    shop: ['shop-1.png', 'shop-1.png'],
-    phone: ['phone-1.png', 'phone-2.png'],
-    prize: ['prize-1.png', 'prize-1.png'],
-    rob: ['rob-1.png', 'rob-1.png'],
-    sleep: ['sleep-1.png', 'sleep-2.png'],
+    eat: ['eat-1.webp', 'eat-2.webp', 'eat-1.webp'],
+    ice: ['ice-1.webp', 'ice-2.webp'],
+    shop: ['shop-1.webp', 'shop-1.webp'],
+    phone: ['phone-1.webp', 'phone-2.webp'],
+    prize: ['prize-1.webp', 'prize-1.webp'],
+    rob: ['rob-1.webp', 'rob-1.webp'],
+    sleep: ['sleep-1.webp', 'sleep-2.webp'],
   };
   const overlay = document.createElement('div');
   overlay.id = 'survival-cutscene';

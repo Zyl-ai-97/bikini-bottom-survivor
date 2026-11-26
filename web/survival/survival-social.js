@@ -290,12 +290,12 @@
     const def = NPCS[npc];
     const img = $('survival-npc-img');
     img.style.display = '';
-    if (!def || !def.img) { img.src = './survival/img/anim/rob-1.png'; return; }
+    if (!def || !def.img) { img.src = './survival/img/anim/rob-1.webp'; return; }
     img.onerror = () => {
       img.onerror = () => { img.style.display = 'none'; };
-      img.src = `./survival/img/npc/${def.img}-normal.png?v=1125b`;
+      img.src = `./survival/img/npc/${def.img}-normal.webp?v=1125b`;
     };
-    img.src = `./survival/img/npc/${def.img}-${expr}.png?v=1125b`;
+    img.src = `./survival/img/npc/${def.img}-${expr}.webp?v=1125b`;
   }
   function refreshHud() { if (window.SurvivalHUD) window.SurvivalHUD.refresh(); }
   function setLine(text) { $('survival-npc-line').textContent = text; }
@@ -567,7 +567,7 @@
     setNote('');
     const img = $('survival-npc-img');
     img.onerror = null;
-    img.src = './survival/img/anim/passerby.png?v=1125a';
+    img.src = './survival/img/anim/passerby.webp?v=1125a';
     setLine('哎，你也是住这片的吧？这片水域最近可不太平。');
     setOptions([
       {
@@ -595,7 +595,7 @@
           quests.addReputation(-5, 'robbery');
           setLine('你、你要干什么！来人啊——！（对方丢下钱包游走了）');
           setNote(`抢到 ¥${gain}（赃款，去海之霸找痞老板销赃）· 通缉 +1 · 声望 -5 · 全员好感 -2`);
-          img.src = './survival/img/anim/rob-1.png';
+          img.src = './survival/img/anim/rob-1.webp';
           refreshHud();
           setOptions([{ label: '赶紧溜', onClick: closeDialog }]);
         },

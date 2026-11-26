@@ -150,12 +150,12 @@
         </label>
         <fieldset class="survival-fieldset">
           <legend>分类</legend>
-          <label><input type="radio" name="survival-category" value="食堂餐饮" checked><img class="survival-cat-icon" src="./survival/img/cat-canteen.png" alt="">食堂餐饮</label>
-          <label><input type="radio" name="survival-category" value="奶茶零食"><img class="survival-cat-icon" src="./survival/img/cat-milktea.png" alt="">奶茶零食</label>
-          <label><input type="radio" name="survival-category" value="超市日用"><img class="survival-cat-icon" src="./survival/img/cat-market.png" alt="">超市日用</label>
-          <label><input type="radio" name="survival-category" value="出行"><img class="survival-cat-icon" src="./survival/img/cat-travel.png" alt="">出行</label>
-          <label><input type="radio" name="survival-category" value="学习打印"><img class="survival-cat-icon" src="./survival/img/cat-print.png" alt="">学习打印</label>
-          <label><input type="radio" name="survival-category" value="娱乐社交"><img class="survival-cat-icon" src="./survival/img/cat-fun.png" alt="">娱乐社交</label>
+          <label><input type="radio" name="survival-category" value="食堂餐饮" checked><img class="survival-cat-icon" src="./survival/img/cat-canteen.webp" alt="">食堂餐饮</label>
+          <label><input type="radio" name="survival-category" value="奶茶零食"><img class="survival-cat-icon" src="./survival/img/cat-milktea.webp" alt="">奶茶零食</label>
+          <label><input type="radio" name="survival-category" value="超市日用"><img class="survival-cat-icon" src="./survival/img/cat-market.webp" alt="">超市日用</label>
+          <label><input type="radio" name="survival-category" value="出行"><img class="survival-cat-icon" src="./survival/img/cat-travel.webp" alt="">出行</label>
+          <label><input type="radio" name="survival-category" value="学习打印"><img class="survival-cat-icon" src="./survival/img/cat-print.webp" alt="">学习打印</label>
+          <label><input type="radio" name="survival-category" value="娱乐社交"><img class="survival-cat-icon" src="./survival/img/cat-fun.webp" alt="">娱乐社交</label>
           <small id="survival-closed-hint" class="survival-closed-hint" hidden>已打烊，记账会涨通缉星</small>
         </fieldset>
         <label class="survival-field">备注
@@ -209,7 +209,7 @@
 
     <div id="survival-intro" class="survival-overlay" hidden>
       <div class="survival-panel survival-intro-panel">
-        <img src="./survival/img/poster-main.png" class="survival-intro-img" alt="">
+        <img src="./survival/img/poster-main.webp" class="survival-intro-img" alt="">
         <p class="survival-intro-text">你带着 ¥1500 生活费，来到比奇堡。</p>
         <p class="survival-intro-text">在这里立足 30 天：记账活下去，接活攒声望，别让通缉星爬满。</p>
         <p class="survival-intro-text">钱、声望、通缉——月底的立足评级，由你自己挣。</p>
@@ -1219,7 +1219,7 @@
       drawCardText();
     };
     poster.onerror = drawCardText;
-    poster.src = './survival/img/poster-main.png';
+    poster.src = './survival/img/poster-main.webp';
     function drawCardText() {
       ctx.fillStyle = '#ffb703';
       ctx.font = '700 92px sans-serif';
@@ -1243,14 +1243,14 @@
 
   // —— 新手教程（可跳过、可重看：战报页有「新手教程」按钮） ——
   const TUTORIAL_STEPS = [
-    { img: './survival/img/tutorial/comic-1.png', fb: './survival/img/npc/spongebob-normal.png', cap: '欢迎来到比奇堡！带 ¥1500 立足 30 天：余额就是 HP，月底评级冲 S。' },
+    { img: './survival/img/tutorial/comic-1.webp', fb: './survival/img/npc/spongebob-normal.webp', cap: '欢迎来到比奇堡！带 ¥1500 立足 30 天：余额就是 HP，月底评级冲 S。' },
     { img: './survival/img/tutorial/town-street.webp', cap: '点木牌下潜进小镇。屏幕上方有「当前目标」，点它能自动前往任务地点。' },
-    { img: './survival/img/tutorial/comic-2.png', fb: './survival/img/npc/krabs-normal.png', cap: '花一笔记一笔：大额消费会暴击扣 HP，不超日预算攒连击。' },
-    { img: './survival/img/tutorial/comic-3.png', fb: './survival/img/npc/patrick-normal.png', cap: '贴近 NPC（4.5 米内）点「聊聊」：接支线、攒好感、赚外快。' },
-    { img: './survival/img/tutorial/comic-5.png', fb: './survival/img/anim/phone-2.png', cap: '海螺手机里有任务、账本、地图、图鉴和战报，随时打开看。' },
-    { img: './survival/img/tutorial/comic-4.png', fb: './survival/img/npc/squidward-normal.png', cap: '蟹老板和痞老板在暗斗秘方：谁的好感先到 60，你就加入谁的阵营。' },
-    { img: './survival/img/poster-main.png', cap: '通缉到 3 星，藏青制服巡警会追你！抓到罚款 ¥50，跑开 38 米能甩掉。' },
-    { img: './survival/img/anim/sleep-2.png', cap: '回菠萝屋睡觉推进一天。第 30 天，看你的立足评级。' },
+    { img: './survival/img/tutorial/comic-2.webp', fb: './survival/img/npc/krabs-normal.webp', cap: '花一笔记一笔：大额消费会暴击扣 HP，不超日预算攒连击。' },
+    { img: './survival/img/tutorial/comic-3.webp', fb: './survival/img/npc/patrick-normal.webp', cap: '贴近 NPC（4.5 米内）点「聊聊」：接支线、攒好感、赚外快。' },
+    { img: './survival/img/tutorial/comic-5.webp', fb: './survival/img/anim/phone-2.webp', cap: '海螺手机里有任务、账本、地图、图鉴和战报，随时打开看。' },
+    { img: './survival/img/tutorial/comic-4.webp', fb: './survival/img/npc/squidward-normal.webp', cap: '蟹老板和痞老板在暗斗秘方：谁的好感先到 60，你就加入谁的阵营。' },
+    { img: './survival/img/poster-main.webp', cap: '通缉到 3 星，藏青制服巡警会追你！抓到罚款 ¥50，跑开 38 米能甩掉。' },
+    { img: './survival/img/anim/sleep-2.webp', cap: '回菠萝屋睡觉推进一天。第 30 天，看你的立足评级。' },
   ];
   let tutorialIndex = 0;
   function renderTutorial() {
