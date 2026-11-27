@@ -1243,7 +1243,7 @@
 
   // —— 新手教程（可跳过、可重看：战报页有「新手教程」按钮） ——
   const TUTORIAL_STEPS = [
-    { img: './survival/img/tutorial/comic-1.webp', fb: './survival/img/npc/spongebob-normal.webp', cap: '欢迎来到比奇堡！带 ¥1500 立足 30 天：余额就是 HP，月底评级冲 S。' },
+    { img: './survival/img/tutorial/comic-1.webp', fb: './survival/img/npc/spongebob-normal.webp', cap: '欢迎来到比奇堡！点一下飞过的木牌（或按回车）就能潜入海底小镇。带 ¥1500 立足 30 天：余额就是 HP，月底评级冲 S。' },
     { img: './survival/img/tutorial/town-street.webp', cap: '点木牌下潜进小镇。屏幕上方有「当前目标」，点它能自动前往任务地点。' },
     { img: './survival/img/tutorial/comic-2.webp', fb: './survival/img/npc/krabs-normal.webp', cap: '花一笔记一笔：大额消费会暴击扣 HP，不超日预算攒连击。' },
     { img: './survival/img/tutorial/comic-3.webp', fb: './survival/img/npc/patrick-normal.webp', cap: '贴近 NPC（4.5 米内）点「聊聊」：接支线、攒好感、赚外快。' },
